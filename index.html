@@ -9,9 +9,9 @@ body{
 margin:0;
 font-family:Arial;
 background:#f5f5f5;
+color:#000;
 }
 
-/* HEADER SHOPEE STYLE */
 header{
 background:linear-gradient(90deg,#ff6a00,#ff8c00);
 color:#fff;
@@ -19,6 +19,16 @@ padding:18px;
 text-align:center;
 font-size:20px;
 font-weight:bold;
+position:relative;
+}
+
+/* ENGRENAGEM */
+#gear{
+position:absolute;
+right:15px;
+top:15px;
+font-size:20px;
+cursor:pointer;
 }
 
 /* CONTAINER */
@@ -38,6 +48,7 @@ border:none;
 border-radius:20px;
 background:#fff;
 font-weight:bold;
+color:#000;
 }
 
 .cat button.active{
@@ -45,7 +56,7 @@ background:#ff6a00;
 color:#fff;
 }
 
-/* PRODUTOS */
+/* CARD */
 .card{
 background:#fff;
 border-radius:15px;
@@ -54,7 +65,15 @@ overflow:hidden;
 box-shadow:0 3px 10px rgba(0,0,0,0.1);
 }
 
-.card-body{padding:10px}
+.card img{
+width:100%;
+height:180px;
+object-fit:cover;
+}
+
+.card-body{
+padding:10px;
+}
 
 .price{
 color:#ff6a00;
@@ -85,8 +104,8 @@ color:#fff;
 padding:15px;
 border-radius:50px;
 font-weight:bold;
-box-shadow:0 5px 15px rgba(0,0,0,0.3);
 cursor:pointer;
+box-shadow:0 5px 15px rgba(0,0,0,0.3);
 }
 
 /* MODAL CARRINHO */
@@ -105,9 +124,7 @@ padding:15px;
 overflow:auto;
 }
 
-#cartModal.active{
-bottom:0;
-}
+#cartModal.active{bottom:0}
 
 .cartItem{
 display:flex;
@@ -115,13 +132,35 @@ justify-content:space-between;
 padding:10px;
 border-bottom:1px solid #eee;
 }
+
+/* ADMIN */
+#adminModal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.6);
+display:none;
+align-items:center;
+justify-content:center;
+}
+
+.adminBox{
+background:#fff;
+padding:20px;
+border-radius:10px;
+width:90%;
+}
 </style>
 </head>
 
 <body>
 
 <header>
-🛍️ Minha Loja Online
+🛍️ Minha Loja
+
+<div id="gear" onclick="openAdmin()">⚙️</div>
 </header>
 
 <div class="container">
@@ -149,14 +188,25 @@ border-bottom:1px solid #eee;
 <button onclick="closeCart()">Fechar</button>
 </div>
 
+<!-- ADMIN -->
+<div id="adminModal">
+<div class="adminBox">
+<h3>Senha Admin</h3>
+<input id="adminPass" type="password" placeholder="Digite a senha">
+<button onclick="login()">Entrar</button>
+<button onclick="closeAdmin()">Fechar</button>
+</div>
+</div>
+
 <script>
 
 const WHATSAPP = "5585982241638";
+const ADMIN_PASSWORD = "1234";
 
 let cart=[];
 let filterCat="all";
 
-/* 📦 SEUS PRODUTOS */
+/* PRODUTOS */
 let products=[
 "Tirzec 15 mg ampola unica",
 "Tirzec 15 mg 4 ampolas",
@@ -200,16 +250,14 @@ if(filterCat!=="all" && p.category!==filterCat) return;
 
 list.innerHTML+=`
 <div class="card">
-<img src="${p.img}" width="100%">
-
+<img src="${p.img}">
 <div class="card-body">
 <h3>${p.name}</h3>
 <div class="price">R$ ${p.price}</div>
 
 <button onclick="addCart(${i})">Adicionar</button>
 </div>
-</div>
-`;
+</div>`;
 });
 }
 
@@ -251,6 +299,24 @@ msg+=`- ${p.name} R$ ${p.price}%0A`;
 });
 
 window.open("https://wa.me/"+WHATSAPP+"?text="+msg);
+}
+
+/* ADMIN */
+function openAdmin(){
+document.getElementById("adminModal").style.display="flex";
+}
+
+function closeAdmin(){
+document.getElementById("adminModal").style.display="none";
+}
+
+function login(){
+if(adminPass.value===ADMIN_PASSWORD){
+alert("Acesso liberado");
+closeAdmin();
+}else{
+alert("Senha incorreta");
+}
 }
 
 render();
