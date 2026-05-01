@@ -10,29 +10,46 @@ function abrirAdmin(){
   } else {
     alert("Senha incorreta");
   }
+
 }
 
-// 🚪 sair admin
+// 🚪 sair do admin (AGORA FUNCIONA)
 function fecharAdmin(){
   document.getElementById("admin").style.display = "none";
 }
 
-// 🏷️ salvar nome do site
-function salvarNomeSite(){
+// 📸 UPLOAD DE IMAGEM (GALERIA)
+function uploadImagem(file){
 
-  let nome = document.getElementById("nomeSite").value;
+  return new Promise((resolve)=>{
 
-  document.querySelector("header h2").innerText = nome;
+    let reader = new FileReader();
+
+    reader.onload = function(e){
+      resolve(e.target.result); // base64
+    }
+
+    reader.readAsDataURL(file);
+
+  });
 
 }
 
 // ➕ adicionar produto
-function addProduto(){
+async function addProduto(){
+
+  let file = document.getElementById("file").files[0];
+
+  let imagem = "";
+
+  if(file){
+    imagem = await uploadImagem(file);
+  }
 
   db.collection("produtos").add({
     nome: nome.value,
     preco: preco.value,
-    imagem: imagem.value
+    imagem: imagem
   });
 
   carregar();
@@ -76,12 +93,11 @@ function editar(id,n,p,i){
 
   let nn = prompt("Nome:", n);
   let pp = prompt("Preço:", p);
-  let ii = prompt("Imagem:", i);
 
   db.collection("produtos").doc(id).update({
-    nome:nn,
-    preco:pp,
-    imagem:ii
+    nome: nn,
+    preco: pp,
+    imagem: i
   });
 
   carregar();
