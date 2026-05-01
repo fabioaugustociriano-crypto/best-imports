@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Best Imports Pro</title>
+<title>Best Imports</title>
 
 <style>
 body{margin:0;font-family:Arial;background:#f5f5f5}
@@ -20,8 +20,8 @@ padding:20px;
 background:#fff;
 border-radius:12px;
 padding:10px;
-box-shadow:0 2px 8px rgba(0,0,0,.1);
 text-align:center;
+box-shadow:0 2px 8px rgba(0,0,0,.1);
 }
 
 .product img{
@@ -43,27 +43,28 @@ text-decoration:none;
 border-radius:8px;
 }
 
-.admin-btn{
+.cart{
 position:fixed;
-bottom:20px;
+left:10px;
+bottom:10px;
+background:white;
+padding:10px;
+width:250px;
+box-shadow:0 0 10px rgba(0,0,0,.2);
+border-radius:10px;
+font-size:12px;
+}
+
+.checkout{
+position:fixed;
 right:20px;
-background:#22c55e;
+bottom:20px;
+background:#25D366;
 color:#fff;
 padding:12px;
 border-radius:50%;
+border:none;
 cursor:pointer;
-}
-
-.admin{
-position:fixed;
-top:0;
-right:0;
-width:300px;
-height:100%;
-background:#fff;
-padding:20px;
-display:none;
-overflow:auto;
 }
 </style>
 </head>
@@ -71,34 +72,14 @@ overflow:auto;
 <body>
 
 <header>
-<h2>BEST IMPORTS PRO</h2>
+<h2>BEST IMPORTS</h2>
 </header>
-
-<!-- FILTRO -->
-<select id="filtro" onchange="carregar()" style="margin:10px;">
-<option value="todos">Todos</option>
-<option value="perfume">Perfume</option>
-<option value="monjauro">Monjauro</option>
-</select>
 
 <div class="products" id="produtos"></div>
 
-<div class="admin-btn" onclick="abrir()">⚙️</div>
+<div class="cart" id="cart">Carrinho vazio</div>
 
-<div class="admin" id="admin">
-
-<h3>Admin</h3>
-
-<input id="nome" placeholder="Nome"><br><br>
-<input id="preco" placeholder="Preço"><br><br>
-<input id="categoria" placeholder="Categoria"><br><br>
-
-<input id="imagem" placeholder="Link imagem"><br><br>
-<input type="file" id="file" accept="image/*"><br><br>
-
-<button onclick="add()">Salvar</button>
-
-</div>
+<button class="checkout" onclick="finalizarCompra()">🛒</button>
 
 <!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -107,84 +88,29 @@ overflow:auto;
 
 <script>
 
-// 🔥 CONFIG FIREBASE
+// 🔥 FIREBASE CONFIG
 const firebaseConfig = {
-  apiKey: "SUA_KEY",
-  authDomain: "SEU_DOMINIO",
-  projectId: "SEU_ID",
-  storageBucket: "SEU_BUCKET"
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_PROJECT.firebaseapp.com",
+  projectId: "SEU_PROJECT",
+  storageBucket: "SEU_PROJECT.appspot.com"
 };
 
 firebase.initializeApp(firebaseConfig);
-
 const db = firebase.firestore();
-const storage = firebase.storage();
 
-let imagemBase64 = "";
+let carrinho = [];
 
-// 📷 imagem galeria
-document.getElementById("file").addEventListener("change", e=>{
-  let file = e.target.files[0];
-  let reader = new FileReader();
-  reader.onload = x=> imagemBase64 = x.target.result;
-  reader.readAsDataURL(file);
-});
-
-// ⚙️ abrir admin
-function abrir(){
-  if(prompt("Senha:") === "1234"){
-    document.getElementById("admin").style.display="block";
-  }
-}
-
-// 📤 upload imagem real
-async function uploadImagem(file){
-
-  let ref = storage.ref("produtos/" + Date.now() + file.name);
-  await ref.put(file);
-
-  return await ref.getDownloadURL();
-}
-
-// ➕ adicionar produto
-async function add(){
-
-  let file = document.getElementById("file").files[0];
-  let url = imagemBase64;
-
-  if(file){
-    url = await uploadImagem(file);
-  }
-
-  db.collection("produtos").add({
-    nome:nome.value,
-    preco:preco.value,
-    categoria:categoria.value || "geral",
-    imagem:url,
-    createdAt:Date.now()
-  });
-
-  alert("Produto salvo!");
-  carregar();
-}
-
-// 🛍️ carregar produtos
+// 🛍️ CARREGAR PRODUTOS
 function carregar(){
 
   let div = document.getElementById("produtos");
   div.innerHTML = "";
 
-  let filtro = document.getElementById("filtro").value;
-
-  db.collection("produtos")
-  .orderBy("createdAt","desc")
-  .get()
-  .then(snapshot=>{
+  db.collection("produtos").get().then(snapshot=>{
 
     snapshot.forEach(doc=>{
       let p = doc.data();
-
-      if(filtro !== "todos" && p.categoria !== filtro) return;
 
       div.innerHTML += `
       <div class="product">
@@ -192,12 +118,8 @@ function carregar(){
         <h3>${p.nome}</h3>
         <div class="price">${p.preco}</div>
 
-        <button onclick="editar('${doc.id}','${p.nome}','${p.preco}','${p.imagem}')">
-          Editar
-        </button>
-
-        <button onclick="deletar('${doc.id}')">
-          Excluir
+        <button onclick="addCarrinho('${p.nome}','${p.preco}')">
+          Adicionar
         </button>
 
         <a class="btn"
@@ -209,28 +131,60 @@ function carregar(){
     });
 
   });
+
 }
 
-// ✏️ editar
-function editar(id,nomeAtual,precoAtual,imgAtual){
+// ➕ CARRINHO
+function addCarrinho(nome,preco){
 
-  let n = prompt("Nome:",nomeAtual);
-  let p = prompt("Preço:",precoAtual);
-  let i = prompt("Imagem:",imgAtual);
+  carrinho.push({nome,preco});
 
-  db.collection("produtos").doc(id).update({
-    nome:n,
-    preco:p,
-    imagem:i
+  atualizarCarrinho();
+}
+
+// 🧠 ATUALIZAR CARRINHO
+function atualizarCarrinho(){
+
+  let div = document.getElementById("cart");
+  let total = 0;
+  let html = "";
+
+  carrinho.forEach((item,i)=>{
+    total += parseFloat(item.preco);
+
+    html += `
+    ${item.nome} - R$ ${item.preco}
+    <br>
+    `;
   });
 
-  carregar();
+  div.innerHTML = html + "<hr>Total: R$ " + total.toFixed(2);
+
 }
 
-// ❌ deletar
-function deletar(id){
-  db.collection("produtos").doc(id).delete();
-  carregar();
+// 📲 FINALIZAR COMPRA WHATSAPP
+function finalizarCompra(){
+
+  if(carrinho.length === 0){
+    alert("Carrinho vazio!");
+    return;
+  }
+
+  let msg = "🛒 Pedido Best Imports%0A%0A";
+  let total = 0;
+
+  carrinho.forEach((item,i)=>{
+    msg += `${i+1}. ${item.nome} - R$ ${item.preco}%0A`;
+    total += parseFloat(item.preco);
+  });
+
+  msg += `%0A💰 Total: R$ ${total.toFixed(2)}`;
+
+  window.open(
+    "https://wa.me/5585982241638?text=" + msg,
+    "_blank"
+  );
+
 }
 
 carregar();
