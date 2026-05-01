@@ -127,16 +127,11 @@ box-shadow:-2px 0 10px rgba(0,0,0,.2);
 
 <h3>🔐 ADMIN</h3>
 
-<!-- 🏷️ NOME DO SITE -->
-<input id="nomeSite" placeholder="Nome do site"><br><br>
-<button onclick="salvarNomeSite()">Salvar nome</button>
-
-<hr>
-
-<!-- ➕ PRODUTO -->
 <input id="nome" placeholder="Nome produto"><br><br>
 <input id="preco" placeholder="Preço"><br><br>
-<input id="imagem" placeholder="URL imagem"><br><br>
+
+<!-- 📸 FOTO DIRETO DA GALERIA -->
+<input type="file" id="file" accept="image/*"><br><br>
 
 <button onclick="addProduto()">Adicionar</button>
 
@@ -150,7 +145,7 @@ box-shadow:-2px 0 10px rgba(0,0,0,.2);
 <button onclick="fecharAdmin()" style="
 background:red;
 color:white;
-padding:8px;
+padding:10px;
 border:none;
 width:100%;
 ">
