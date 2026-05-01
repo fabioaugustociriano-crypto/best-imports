@@ -2,13 +2,13 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Minha Loja</title>
+<title>Loja Online</title>
 
 <style>
 body{
 margin:0;
 font-family:Arial;
-background:#f2f2f2;
+background:#f5f5f5;
 }
 
 /* HEADER SHOPEE STYLE */
@@ -19,8 +19,6 @@ padding:18px;
 text-align:center;
 font-size:20px;
 font-weight:bold;
-position:sticky;
-top:0;
 }
 
 /* CONTAINER */
@@ -40,7 +38,6 @@ border:none;
 border-radius:20px;
 background:#fff;
 font-weight:bold;
-box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 
 /* PRODUTOS */
@@ -68,6 +65,7 @@ font-weight:bold;
 font-size:18px;
 }
 
+/* BOTÃO */
 button{
 width:100%;
 padding:12px;
@@ -77,15 +75,30 @@ background:linear-gradient(90deg,#ff6a00,#ff8c00);
 color:#fff;
 font-weight:bold;
 margin-top:8px;
+cursor:pointer;
 }
 
-/* CARRINHO MODAL */
+/* BOTÃO CARRINHO FLUTUANTE */
+#cartBtn{
+position:fixed;
+bottom:20px;
+right:20px;
+background:#ff6a00;
+color:#fff;
+padding:15px;
+border-radius:50px;
+font-weight:bold;
+box-shadow:0 5px 15px rgba(0,0,0,0.3);
+cursor:pointer;
+}
+
+/* CARRINHO */
 #cartModal{
 position:fixed;
 bottom:-100%;
 left:0;
 width:100%;
-height:65%;
+height:60%;
 background:#fff;
 border-top-left-radius:20px;
 border-top-right-radius:20px;
@@ -104,19 +117,6 @@ display:flex;
 justify-content:space-between;
 padding:10px;
 border-bottom:1px solid #eee;
-}
-
-/* BOTÃO FIXO CARRINHO */
-.cartBtn{
-position:fixed;
-bottom:15px;
-right:15px;
-background:#ff6a00;
-color:#fff;
-padding:15px;
-border-radius:50px;
-box-shadow:0 5px 10px rgba(0,0,0,0.3);
-font-weight:bold;
 }
 
 /* ADMIN OCULTO */
@@ -144,7 +144,7 @@ width:90%;
 <body>
 
 <header>
-🛍️ Minha Loja Oficial
+🛍️ Minha Loja Online
 </header>
 
 <div class="container">
@@ -161,25 +161,36 @@ width:90%;
 
 </div>
 
-<!-- BOTÃO CARRINHO -->
-<div class="cartBtn" onclick="openCart()">
-🛒 Carrinho
-</div>
-
 <!-- CARRINHO -->
+<div id="cartBtn" onclick="openCart()">🛒 Carrinho</div>
+
 <div id="cartModal">
 <h3>Seu Carrinho</h3>
 <div id="cart"></div>
-<button onclick="sendWhatsApp()">Finalizar pedido</button>
+
+<button onclick="sendWhatsApp()">Finalizar no WhatsApp</button>
 <button onclick="closeCart()">Fechar</button>
+</div>
+
+<!-- ADMIN OCULTO -->
+<div id="adminModal">
+<div class="adminBox">
+<h3>Senha Admin</h3>
+<input id="pass" type="password" placeholder="Digite a senha">
+<button onclick="login()">Entrar</button>
+</div>
 </div>
 
 <script>
 
 const WHATSAPP = "5585982241638";
+const ADMIN_PASSWORD = "1234";
 
-/* 📦 SEUS PRODUTOS (NÃO ALTERADOS) */
-let products = [
+let cart=[];
+let filterCat="all";
+
+/* 📦 PRODUTOS ORIGINAIS */
+let products=[
 "Tirzec 15 mg ampola unica",
 "Tirzec 15 mg 4 ampolas",
 "Lipoless MD ampola unica",
@@ -194,13 +205,10 @@ let products = [
 "Silver agent","Silver agent intense"
 ].map(p=>({
 name:p,
-price:(Math.random()*100+50).toFixed(2),
+price:0,
 img:"https://via.placeholder.com/400x300",
 category:(p.includes("Tirzec")||p.includes("Lipoless")||p.includes("Veltrane")||p.includes("Retatrutide"))?"Modulação":"Perfumes"
 }));
-
-let cart=[];
-let filterCat="all";
 
 /* FILTRO */
 function filter(c){
@@ -214,7 +222,6 @@ let list=document.getElementById("list");
 list.innerHTML="";
 
 products.forEach((p,i)=>{
-
 if(filterCat!=="all" && p.category!==filterCat) return;
 
 list.innerHTML+=`
@@ -224,7 +231,7 @@ list.innerHTML+=`
 <h3>${p.name}</h3>
 <div class="price">R$ ${p.price}</div>
 
-<button onclick="addCart(${i})">Adicionar ao carrinho</button>
+<button onclick="addCart(${i})">Adicionar</button>
 </div>
 </div>
 `;
@@ -271,10 +278,25 @@ msg+=`- ${p.name} R$ ${p.price}%0A`;
 window.open("https://wa.me/"+WHATSAPP+"?text="+msg);
 }
 
+/* ADMIN */
+document.addEventListener("keydown",function(e){
+if(e.key==="F2"){
+document.getElementById("adminModal").style.display="flex";
+}
+});
+
+function login(){
+if(pass.value===ADMIN_PASSWORD){
+alert("Admin liberado (aqui você pode evoluir painel depois)");
+document.getElementById("adminModal").style.display="none";
+}else{
+alert("Senha errada");
+}
+}
+
 render();
 
 </script>
 
 </body>
-</html>
 </html>
