@@ -144,7 +144,7 @@ border-radius:10px;
 <body>
 
 <header>
-🛍️ Minha Loja
+🛍️ Best Imports
 <div id="gear" onclick="openAdmin()">⚙️</div>
 </header>
 
@@ -172,13 +172,18 @@ border-radius:10px;
 <div id="admin">
 <div class="adminBox">
 
-<h3>Admin</h3>
+<h3>⚙️ Painel do Administrador</h3>
 
-<input id="pass" type="password" placeholder="Senha">
+<input id="pass" type="password" placeholder="Senha admin">
+<button onclick="loginAdmin()">Entrar</button>
 
 <hr>
 
-<input id="name" placeholder="Nome">
+<div id="panel" style="display:none">
+
+<h3>➕ Novo Produto</h3>
+
+<input id="name" placeholder="Nome do produto">
 <input id="price" placeholder="Preço">
 <input id="img" placeholder="Imagem URL">
 
@@ -187,8 +192,15 @@ border-radius:10px;
 <option>Monjauro</option>
 </select>
 
-<button onclick="login()">Entrar</button>
 <button onclick="addProduct()">Adicionar Produto</button>
+
+<hr>
+
+<h3>📦 Produtos cadastrados</h3>
+<div id="adminList"></div>
+
+</div>
+
 <button onclick="closeAdmin()">Fechar</button>
 
 </div>
@@ -196,8 +208,97 @@ border-radius:10px;
 
 <script>
 
+function loginAdmin(){
+let p = document.getElementById("pass").value;
+
+if(p === ADMIN_PASS){
+document.getElementById("panel").style.display="block";
+renderAdminList();
+}else{
+alert("Senha incorreta");
+}
+}
+
+/* LISTA ADMIN */
+function renderAdminList(){
+let box = document.getElementById("adminList");
+box.innerHTML="";
+
+products.forEach((p,i)=>{
+box.innerHTML+=`
+<div style="
+background:#f4f6f9;
+padding:10px;
+margin:5px 0;
+border-radius:10px;
+">
+
+<b>${p.name}</b><br>
+R$ ${p.price}
+
+<div style="display:flex;gap:5px;margin-top:5px">
+<button onclick="editProduct(${i})">Editar</button>
+<button onclick="deleteProduct(${i})" style="background:red">Excluir</button>
+</div>
+
+</div>
+`;
+});
+}
+
+/* ADD */
+function addProduct(){
+products.push({
+id:Date.now(),
+name:name.value,
+price:Number(price.value),
+img:img.value || "https://via.placeholder.com/400x300",
+category:cat.value
+});
+
+localStorage.setItem("products",JSON.stringify(products));
+
+render();
+renderAdminList();
+}
+
+/* EDIT */
+function editProduct(i){
+let p = products[i];
+
+let n = prompt("Nome:", p.name);
+let pr = prompt("Preço:", p.price);
+let im = prompt("Imagem:", p.img);
+
+if(n) p.name=n;
+if(pr) p.price=Number(pr);
+if(im) p.img=im;
+
+localStorage.setItem("products",JSON.stringify(products));
+
+render();
+renderAdminList();
+}
+
+/* DELETE */
+function deleteProduct(i){
+products.splice(i,1);
+
+localStorage.setItem("products",JSON.stringify(products));
+
+render();
+renderAdminList();
+}
+
+/* CLOSE */
+function closeAdmin(){
+document.getElementById("admin").style.display="none";
+document.getElementById("panel").style.display="none";
+}
+  <script>
+    
 const WHATSAPP="5585982241638";
-const ADMIN_PASS="1234";
+const ADMIN_PASS="2026";
 
 let cart=[];
 let filterCat="all";
