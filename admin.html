@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Admin</title>
+
+<style>
+body{font-family:Arial;background:#f4f6f9;margin:0}
+
+header{
+background:#111827;
+color:#fff;
+padding:18px;
+text-align:center;
+font-weight:bold;
+}
+
+.box{
+background:#fff;
+margin:20px;
+padding:20px;
+border-radius:10px;
+box-shadow:0 2px 10px rgba(0,0,0,.1);
+}
+
+input,select{
+width:100%;
+padding:10px;
+margin:5px 0;
+}
+
+button{
+width:100%;
+padding:10px;
+background:#2563eb;
+color:#fff;
+border:none;
+border-radius:8px;
+font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<header>⚙️ Admin Painel</header>
+
+<div class="box">
+
+<h3>Login</h3>
+<input id="pass" type="password" placeholder="Senha">
+<button onclick="login()">Entrar</button>
+
+<hr>
+
+<h3>Produto</h3>
+<input id="name" placeholder="Nome">
+<input id="price" placeholder="Preço">
+<input id="img" placeholder="Imagem URL">
+
+<select id="cat">
+<option>Perfumes</option>
+<option>Monjauro</option>
+</select>
+
+<button onclick="add()">Adicionar Produto</button>
+
+</div>
+
+<script>
+
+const PASS="1234";
+
+let products=JSON.parse(localStorage.getItem("products")) || [];
+
+function login(){
+let p=document.getElementById("pass").value;
+
+if(p==PASS){
+alert("Logado!");
+}else{
+alert("Senha errada");
+}
+}
+
+function add(){
+
+products.push({
+id:Date.now(),
+name:name.value,
+price:Number(price.value),
+img:img.value,
+category:cat.value
+});
+
+localStorage.setItem("products",JSON.stringify(products));
+
+alert("Produto adicionado!");
+}
+
+</script>
+
+</body>
+</html>
