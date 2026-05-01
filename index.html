@@ -83,7 +83,6 @@ header {
   border-radius: 8px;
 }
 
-/* BOTÃO ADMIN */
 .admin-btn {
   position: fixed;
   bottom: 20px;
@@ -95,7 +94,6 @@ header {
   cursor: pointer;
 }
 
-/* PAINEL */
 .admin-panel {
   position: fixed;
   top: 0;
@@ -130,16 +128,17 @@ header {
 
 <div class="products" id="produtos"></div>
 
-<!-- BOTÃO ADMIN -->
 <div class="admin-btn" onclick="abrirAdmin()">⚙️</div>
 
-<!-- PAINEL -->
 <div class="admin-panel" id="admin">
 <h3>Painel</h3>
 
 <input id="nome" placeholder="Nome"><br><br>
 <input id="preco" placeholder="Preço"><br><br>
 <input id="imagem" placeholder="Link imagem"><br><br>
+
+<!-- NOVO (UPLOAD) -->
+<input type="file" id="fileInput" accept="image/*"><br><br>
 
 <select id="categoria">
 <option value="perfume">Perfume</option>
@@ -154,18 +153,33 @@ header {
 
 <script>
 let SENHA = "1234";
+let imagemBase64 = "";
 
 let produtos = JSON.parse(localStorage.getItem("produtos")) || [];
 
-// PRODUTOS INICIAIS
 if(produtos.length === 0){
   produtos = [
     {nome:"Dior Sauvage", preco:"R$ 399,90", imagem:"https://i.imgur.com/8kP4F5h.jpg", categoria:"perfume"},
-    {nome:"1 Million", preco:"R$ 379,90", imagem:"https://i.imgur.com/Q2Z8Z5B.jpg", categoria:"perfume"},
-    {nome:"TG 15mg", preco:"Consultar", imagem:"https://i.imgur.com/placeholder.jpg", categoria:"monjauro"}
+    {nome:"1 Million", preco:"R$ 379,90", imagem:"https://i.imgur.com/Q2Z8Z5B.jpg", categoria:"perfume"}
   ];
   localStorage.setItem("produtos", JSON.stringify(produtos));
 }
+
+// 📷 CAPTURA IMAGEM DO CELULAR
+document.getElementById("fileInput").addEventListener("change", function(){
+  let file = this.files[0];
+
+  if(file){
+    let reader = new FileReader();
+
+    reader.onload = function(e){
+      imagemBase64 = e.target.result;
+      alert("Imagem carregada!");
+    }
+
+    reader.readAsDataURL(file);
+  }
+});
 
 function carregar(){
   let div = document.getElementById("produtos");
@@ -186,7 +200,6 @@ function carregar(){
   listar();
 }
 
-// 🔥 ATUALIZA BOTÕES WHATS COM NOME + PREÇO + FOTO
 function atualizarLinksWhatsApp(){
   document.querySelectorAll(".product").forEach(prod => {
     let nome = prod.querySelector("h3").innerText;
@@ -218,12 +231,14 @@ function verificarSenha(){
   let p = {
     nome: nome.value,
     preco: preco.value,
-    imagem: imagem.value,
+    imagem: imagemBase64 || imagem.value,
     categoria: categoria.value
   };
 
   produtos.push(p);
   localStorage.setItem("produtos", JSON.stringify(produtos));
+  imagemBase64 = "";
+  fileInput.value = "";
   carregar();
 }
 
@@ -251,14 +266,18 @@ function editarProduto(i){
 
   let novoNome = window.prompt("Nome:", p.nome);
   let novoPreco = window.prompt("Preço:", p.preco);
-  let novaImagem = window.prompt("Imagem:", p.imagem);
+  let novaImagem = window.prompt("Imagem (ou deixa vazio):", "");
 
   if(novoNome) p.nome = novoNome;
   if(novoPreco) p.preco = novoPreco;
   if(novaImagem) p.imagem = novaImagem;
+  if(imagemBase64) p.imagem = imagemBase64;
 
   produtos[i] = p;
+
   localStorage.setItem("produtos", JSON.stringify(produtos));
+  imagemBase64 = "";
+  fileInput.value = "";
   carregar();
 }
 
