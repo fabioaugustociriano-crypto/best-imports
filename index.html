@@ -2,290 +2,133 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Loja Simples</title>
+<title>Best Imports</title>
 
 <style>
-body{margin:0;font-family:Arial;background:#f5f5f5}
-header{background:#7c3aed;color:white;text-align:center;padding:20px}
+body{
+  font-family: Arial;
+  margin:0;
+  background:#f4f4f4;
+}
+
+header{
+  background:#111;
+  color:white;
+  padding:20px;
+  text-align:center;
+  font-size:24px;
+}
+
+h2{
+  margin-left:20px;
+}
 
 .container{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
-gap:15px;
-padding:20px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:15px;
+  padding:20px;
 }
 
 .card{
-background:white;
-border-radius:12px;
-padding:10px;
-text-align:center;
-box-shadow:0 2px 8px rgba(0,0,0,.1);
+  background:white;
+  width:180px;
+  padding:10px;
+  border-radius:10px;
+  text-align:center;
+  box-shadow:0 2px 8px rgba(0,0,0,0.1);
 }
 
 .card img{
-width:100%;
-height:140px;
-object-fit:cover;
-border-radius:8px;
+  width:100%;
+  height:120px;
+  object-fit:cover;
+  border-radius:8px;
 }
 
-.price{color:#22c55e;font-weight:bold}
-
-.btn{
-display:block;
-padding:8px;
-background:#7c3aed;
-color:white;
-text-decoration:none;
-border-radius:8px;
-margin-top:5px;
+button{
+  width:100%;
+  padding:8px;
+  border:none;
+  background:black;
+  color:white;
+  border-radius:5px;
+  cursor:pointer;
 }
 
-.admin{
-position:fixed;
-top:0;
-right:0;
-width:300px;
-height:100%;
-background:white;
-padding:15px;
-overflow:auto;
-display:none;
-box-shadow:-2px 0 10px rgba(0,0,0,.2);
-}
-
-.admin-btn{
-position:fixed;
-bottom:20px;
-right:20px;
-background:#22c55e;
-color:white;
-border:none;
-padding:12px;
-border-radius:50%;
-cursor:pointer;
+#cart{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  background:black;
+  color:white;
+  padding:15px;
+  border-radius:10px;
 }
 </style>
-<!-- 🔥 FIREBASE -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
-
-<script>
-
-// 🔥 SUA CONFIG (JÁ INSERIDA)
-const firebaseConfig = {
-  apiKey: "AIzaSyCPJ6tj_GJHFr_Dx8C6QC2hdILhqBpCFic",
-  authDomain: "best-imports.firebaseapp.com",
-  projectId: "best-imports",
-  storageBucket: "best-imports.appspot.com",
-  messagingSenderId: "494059335243",
-  appId: "1:494059335243:web:31ed9d223d0e544f0827ce",
-  measurementId: "G-FL82KGH2LZ"
-};
-
-// 🚀 INICIALIZAR FIREBASE
-firebase.initializeApp(firebaseConfig);
-
-// 📦 BANCO DE DADOS (PRODUTOS)
-const db = firebase.firestore();
-
-// 📁 STORAGE (IMAGENS)
-const storage = firebase.storage();
-
-</script>
-
 </head>
-<!-- 🔐 BOTÃO ADMIN -->
-<button onclick="abrirAdmin()" style="
-position:fixed;
-bottom:20px;
-right:20px;
-background:#22c55e;
-color:white;
-padding:12px;
-border-radius:50%;
-border:none;
-font-size:18px;
-cursor:pointer;
-">⚙️</button>
 
-<div id="admin" style="
-position:fixed;
-top:0;
-right:0;
-width:320px;
-height:100%;
-background:white;
-padding:15px;
-overflow:auto;
-display:none;
-box-shadow:-2px 0 10px rgba(0,0,0,.2);
-">
-
-<h3>🔐 ADMIN</h3>
-
-<input id="nome" placeholder="Nome produto"><br><br>
-<input id="preco" placeholder="Preço"><br><br>
-
-<!-- 📸 FOTO DIRETO DA GALERIA -->
-<input type="file" id="file" accept="image/*"><br><br>
-
-<button onclick="addProduto()">Adicionar</button>
-
-<hr>
-
-<h4>📦 Produtos</h4>
-<div id="listaAdmin"></div>
-
-<hr>
-
-<button onclick="fecharAdmin()" style="
-background:red;
-color:white;
-padding:10px;
-border:none;
-width:100%;
-">
-Sair do Admin
-</button>
-
-</div>
-  
 <body>
 
-<header>
-<h2>LOJA SIMPLES</h2>
-</header>
+<header>🛍️ Best Imports</header>
 
-<div class="container" id="produtos"></div>
+<h2>🧴 Perfumes</h2>
+<div class="container">
 
-<!-- BOTÃO ADMIN -->
-<button class="admin-btn" onclick="login()">⚙️</button>
+  <div class="card">
+    <img src="https://via.placeholder.com/150">
+    <h3>Yara Candy</h3>
+    <p>R$ 199</p>
+    <button onclick="add('Yara Candy',199)">Adicionar</button>
+  </div>
 
-<!-- PAINEL ADMIN -->
-<div class="admin" id="admin">
-
-<h3>🔐 Admin</h3>
-
-<input id="nome" placeholder="Nome"><br><br>
-<input id="preco" placeholder="Preço"><br><br>
-<input id="imagem" placeholder="URL imagem"><br><br>
-
-<button onclick="addProduto()">Adicionar</button>
-
-<hr>
-
-<h4>Produtos</h4>
-<div id="listaAdmin"></div>
+  <div class="card">
+    <img src="https://via.placeholder.com/150">
+    <h3>Hawas Black</h3>
+    <p>R$ 249</p>
+    <button onclick="add('Hawas Black',249)">Adicionar</button>
+  </div>
 
 </div>
 
+<h2>📦 Importados</h2>
+<div class="container">
+
+  <div class="card">
+    <img src="https://via.placeholder.com/150">
+    <h3>Produto 1</h3>
+    <p>R$ 399</p>
+    <button onclick="add('Produto 1',399)">Adicionar</button>
+  </div>
+
+</div>
+
+<!-- CARRINHO -->
+<div id="cart">
+🛒 <span id="count">0</span> itens<br><br>
+<button onclick="finish()">Finalizar WhatsApp</button>
+</div>
+
 <script>
+let cart = [];
 
-let produtos = [
-  {nome:"Perfume X", preco:120, imagem:"https://i.imgur.com/1.jpg"},
-  {nome:"Monjauro 15mg", preco:200, imagem:"https://i.imgur.com/2.jpg"}
-];
+function add(name, price){
+  cart.push({name, price});
+  document.getElementById("count").innerText = cart.length;
+}
 
-// 🛍️ mostrar produtos
-function carregar(){
+function finish(){
+  let msg = "🛍️ Pedido Best Imports:%0A%0A";
 
-  let div = document.getElementById("produtos");
-  div.innerHTML = "";
-
-  produtos.forEach((p,i)=>{
-    div.innerHTML += `
-    <div class="card">
-      <img src="${p.imagem}">
-      <h3>${p.nome}</h3>
-      <div class="price">R$ ${p.preco}</div>
-
-      <a class="btn"
-      href="https://wa.me/5585982241638?text=Quero ${p.nome}">
-      Comprar
-      </a>
-    </div>
-    `;
+  cart.forEach(p=>{
+    msg += `• ${p.name} - R$${p.price}%0A`;
   });
 
+  let total = cart.reduce((a,b)=>a+b.price,0);
+  msg += `%0ATotal: R$${total}`;
+
+  window.open("https://wa.me/558582241638?text=" + msg, "_blank");
 }
-
-carregar();
-
-// 🔐 login admin
-function login(){
-
-  let senha = prompt("Senha:");
-
-  if(senha === "1234"){
-    document.getElementById("admin").style.display = "block";
-    carregarAdmin();
-  } else {
-    alert("Senha errada");
-  }
-
-}
-
-// ➕ adicionar produto
-function addProduto(){
-
-  produtos.push({
-    nome:nome.value,
-    preco:preco.value,
-    imagem:imagem.value
-  });
-
-  carregar();
-  carregarAdmin();
-}
-
-// 📦 lista admin
-function carregarAdmin(){
-
-  let div = document.getElementById("listaAdmin");
-  div.innerHTML = "";
-
-  produtos.forEach((p,i)=>{
-    div.innerHTML += `
-    <div style="border:1px solid #ddd;padding:8px;margin-bottom:10px">
-      <b>${p.nome}</b><br>
-      R$ ${p.preco}<br>
-
-      <button onclick="editar(${i})">Editar</button>
-      <button onclick="remover(${i})">Excluir</button>
-    </div>
-    `;
-  });
-
-}
-
-// ✏️ editar produto
-function editar(i){
-
-  let n = prompt("Nome:", produtos[i].nome);
-  let p = prompt("Preço:", produtos[i].preco);
-  let img = prompt("Imagem URL:", produtos[i].imagem);
-
-  produtos[i] = {
-    nome:n,
-    preco:p,
-    imagem:img
-  };
-
-  carregar();
-  carregarAdmin();
-}
-
-// ❌ remover
-function remover(i){
-  produtos.splice(i,1);
-  carregar();
-  carregarAdmin();
-}
-
 </script>
 
 </body>
