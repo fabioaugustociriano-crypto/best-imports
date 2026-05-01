@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Minha Loja Pro</title>
+<title>Loja Pro</title>
 
 <style>
 *{margin:0;font-family:Arial;box-sizing:border-box}
@@ -41,7 +41,6 @@ border-radius:20px;
 background:#fff;
 font-weight:bold;
 cursor:pointer;
-color:#000;
 }
 
 /* PRODUTOS */
@@ -71,6 +70,7 @@ color:#2563eb;
 font-weight:bold;
 }
 
+/* BOTÃO */
 button{
 width:100%;
 padding:12px;
@@ -144,7 +144,7 @@ border-radius:10px;
 <body>
 
 <header>
-🛍️ Best Imports
+🛍️ Minha Loja
 <div id="gear" onclick="openAdmin()">⚙️</div>
 </header>
 
@@ -172,35 +172,25 @@ border-radius:10px;
 <div id="admin">
 <div class="adminBox">
 
-<h3>⚙️ Painel do Administrador</h3>
+<h3>Admin</h3>
 
-<input id="pass" type="password" placeholder="Senha admin">
-<button onclick="loginAdmin()">Entrar</button>
+<input id="pass" type="password" placeholder="Senha">
 
 <hr>
 
-<div id="panel" style="display:none">
-
-<h3>➕ Novo Produto</h3>
-
-<input id="name" placeholder="Nome do produto">
+<input id="name" placeholder="Nome">
 <input id="price" placeholder="Preço">
-<input id="img" placeholder="Imagem URL">
+
+<!-- UPLOAD -->
+<input type="file" id="fileInput" accept="image/*,application/pdf">
 
 <select id="cat">
 <option>Perfumes</option>
 <option>Monjauro</option>
 </select>
 
+<button onclick="login()">Entrar</button>
 <button onclick="addProduct()">Adicionar Produto</button>
-
-<hr>
-
-<h3>📦 Produtos cadastrados</h3>
-<div id="adminList"></div>
-
-</div>
-
 <button onclick="closeAdmin()">Fechar</button>
 
 </div>
@@ -208,101 +198,14 @@ border-radius:10px;
 
 <script>
 
-function loginAdmin(){
-let p = document.getElementById("pass").value;
-
-if(p === ADMIN_PASS){
-document.getElementById("panel").style.display="block";
-renderAdminList();
-}else{
-alert("Senha incorreta");
-}
-}
-
-/* LISTA ADMIN */
-function renderAdminList(){
-let box = document.getElementById("adminList");
-box.innerHTML="";
-
-products.forEach((p,i)=>{
-box.innerHTML+=`
-<div style="
-background:#f4f6f9;
-padding:10px;
-margin:5px 0;
-border-radius:10px;
-">
-
-<b>${p.name}</b><br>
-R$ ${p.price}
-
-<div style="display:flex;gap:5px;margin-top:5px">
-<button onclick="editProduct(${i})">Editar</button>
-<button onclick="deleteProduct(${i})" style="background:red">Excluir</button>
-</div>
-
-</div>
-`;
-});
-}
-
-/* ADD */
-function addProduct(){
-products.push({
-id:Date.now(),
-name:name.value,
-price:Number(price.value),
-img:img.value || "https://via.placeholder.com/400x300",
-category:cat.value
-});
-
-localStorage.setItem("products",JSON.stringify(products));
-
-render();
-renderAdminList();
-}
-
-/* EDIT */
-function editProduct(i){
-let p = products[i];
-
-let n = prompt("Nome:", p.name);
-let pr = prompt("Preço:", p.price);
-let im = prompt("Imagem:", p.img);
-
-if(n) p.name=n;
-if(pr) p.price=Number(pr);
-if(im) p.img=im;
-
-localStorage.setItem("products",JSON.stringify(products));
-
-render();
-renderAdminList();
-}
-
-/* DELETE */
-function deleteProduct(i){
-products.splice(i,1);
-
-localStorage.setItem("products",JSON.stringify(products));
-
-render();
-renderAdminList();
-}
-
-/* CLOSE */
-function closeAdmin(){
-document.getElementById("admin").style.display="none";
-document.getElementById("panel").style.display="none";
-}
-    
 const WHATSAPP="5585982241638";
-const ADMIN_PASS="2026";
+const ADMIN_PASS="1234";
 
 let cart=[];
 let filterCat="all";
+let uploadedFile="";
 
-/* PRODUTOS PRONTOS */
+/* PRODUTOS */
 let products=JSON.parse(localStorage.getItem("products"));
 
 if(!products){
@@ -314,15 +217,23 @@ products=[
 { id:5, name:"Retatrutide verde", price:0, img:"https://via.placeholder.com/400x300", category:"Monjauro" },
 
 { id:6, name:"Veltrane 90 mg", price:0, img:"https://via.placeholder.com/400x300", category:"Perfumes" },
-{ id:7, name:"Veltrane 120mg", price:0, img:"https://via.placeholder.com/400x300", category:"Perfumes" },
-{ id:8, name:"Sabah", price:0, img:"https://via.placeholder.com/400x300", category:"Perfumes" },
-{ id:9, name:"Wazeer", price:0, img:"https://via.placeholder.com/400x300", category:"Perfumes" },
-{ id:10, name:"Ameer", price:0, img:"https://via.placeholder.com/400x300", category:"Perfumes" },
-{ id:11, name:"Leonie", price:0, img:"https://via.placeholder.com/400x300", category:"Perfumes" }
+{ id:7, name:"Veltrane 120mg", price:0, img:"https://via.placeholder.com/400x300", category:"Perfumes" }
 ];
 
 localStorage.setItem("products",JSON.stringify(products));
 }
+
+/* UPLOAD */
+document.getElementById("fileInput").addEventListener("change",function(e){
+let file=e.target.files[0];
+let reader=new FileReader();
+
+reader.onload=function(){
+uploadedFile=reader.result;
+};
+
+reader.readAsDataURL(file);
+});
 
 /* RENDER */
 function render(){
@@ -363,6 +274,7 @@ renderCart();
 openCart();
 }
 
+/* CARRINHO COM QUANTIDADE EDITÁVEL */
 function renderCart(){
 let c=document.getElementById("cart");
 c.innerHTML="";
@@ -370,20 +282,26 @@ c.innerHTML="";
 let total=0;
 
 cart.forEach((p,i)=>{
-let t=p.price*p.qty;
-total+=t;
+let subtotal=p.price*p.qty;
+total+=subtotal;
 
 c.innerHTML+=`
 <div class="cartItem">
 <div>
-${p.name}<br>
-Qtd: ${p.qty}<br>
-R$ ${t}
+<b>${p.name}</b><br>
+
+Qtd:
+<input type="number" min="1" value="${p.qty}"
+onchange="cart[${i}].qty=Number(this.value);renderCart()"
+style="width:60px">
+
+<br>
+R$ ${subtotal}
 </div>
 
 <div>
-<button onclick="p.qty++;renderCart()">+</button>
-<button onclick="p.qty>1?p.qty--:cart.splice(${i},1);renderCart()">-</button>
+<button onclick="cart[${i}].qty++;renderCart()">+</button>
+<button onclick="cart[${i}].qty>1?cart[${i}].qty--:cart.splice(${i},1);renderCart()">-</button>
 </div>
 </div>`;
 });
@@ -417,7 +335,7 @@ msg+=`%0A💰 TOTAL: R$ ${total}`;
 window.open("https://wa.me/"+WHATSAPP+"?text="+encodeURIComponent(msg));
 }
 
-/* ADMIN (ENGRENAGEM COM SENHA) */
+/* ADMIN */
 function openAdmin(){
 let p=prompt("Senha admin:");
 
@@ -432,16 +350,20 @@ function closeAdmin(){
 document.getElementById("admin").style.display="none";
 }
 
+/* ADD PRODUCT */
 function addProduct(){
+
 products.push({
 id:Date.now(),
 name:name.value,
 price:Number(price.value),
-img:img.value || "https://via.placeholder.com/400x300",
+img: uploadedFile || "https://via.placeholder.com/400x300",
 category:cat.value
 });
 
 localStorage.setItem("products",JSON.stringify(products));
+
+uploadedFile="";
 
 render();
 closeAdmin();
