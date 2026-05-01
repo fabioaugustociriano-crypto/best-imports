@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Admin Painel</title>
+
+<style>
+body{
+font-family:Arial;
+background:#f4f6f9;
+margin:0;
+}
+
+header{
+background:#111827;
+color:#fff;
+padding:18px;
+text-align:center;
+font-weight:bold;
+}
+
+.container{
+max-width:700px;
+margin:20px auto;
+background:#fff;
+padding:20px;
+border-radius:10px;
+box-shadow:0 2px 10px rgba(0,0,0,0.1);
+}
+
+input,select{
+width:100%;
+padding:10px;
+margin:5px 0;
+border:1px solid #ddd;
+border-radius:8px;
+}
+
+button{
+width:100%;
+padding:10px;
+background:#2563eb;
+color:#fff;
+border:none;
+border-radius:8px;
+font-weight:bold;
+cursor:pointer;
+margin-top:5px;
+}
+
+.card{
+background:#f9fafb;
+padding:10px;
+margin-top:10px;
+border-radius:8px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+</style>
+</head>
+
+<body>
+
+<header>⚙️ Painel Admin Profissional</header>
+
+<div class="container">
+
+<h3>Login</h3>
+<input id="pass" type="password" placeholder="Senha">
+<button onclick="login()">Entrar</button>
+
+<hr>
+
+<h3>Adicionar Produto</h3>
+<input id="name" placeholder="Nome">
+<input id="price" placeholder="Preço">
+<input id="img" placeholder="Imagem URL">
+
+<select id="cat">
+<option>Perfumes</option>
+<option>Monjauro</option>
+</select>
+
+<button onclick="addProduct()">Adicionar</button>
+
+<hr>
+
+<h3>Produtos cadastrados</h3>
+<div id="list"></div>
+
+</div>
+
+<script>
+
+const PASS="1234";
+
+let products=JSON.parse(localStorage.getItem("products")) || [];
+
+function login(){
+let p=document.getElementById("pass").value;
+
+if(p===PASS){
+alert("Logado com sucesso!");
+render();
+}else{
+alert("Senha incorreta");
+}
+}
+
+function save(){
+localStorage.setItem("products",JSON.stringify(products));
+}
+
+/* ADD */
+function addProduct(){
+products.push({
+id:Date.now(),
+name:name.value,
+price:Number(price.value),
+img:img.value,
+category:cat.value
+});
+
+save();
+render();
+}
+
+/* EDIT */
+function edit(i){
+let p=products[i];
+
+let n=prompt("Nome:",p.name);
+let pr=prompt("Preço:",p.price);
+let im=prompt("Imagem:",p.img);
+
+if(n) p.name=n;
+if(pr) p.price=Number(pr);
+if(im) p.img=im;
+
+save();
+render();
+}
+
+/* DELETE */
+function del(i){
+products.splice(i,1);
+save();
+render();
+}
+
+/* LIST */
+function render(){
+let list=document.getElementById("list");
+list.innerHTML="";
+
+products.forEach((p,i)=>{
+list.innerHTML+=`
+<div class="card">
+<div>
+<b>${p.name}</b><br>
+R$ ${p.price}
+</div>
+
+<div>
+<button onclick="edit(${i})">Editar</button>
+<button onclick="del(${i})">Excluir</button>
+</div>
+</div>
+`;
+});
+}
+
+</script>
+
+</body>
+</html>
