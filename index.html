@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Minha Loja Pro</title>
+<title>Loja Pro</title>
 
 <style>
 *{
@@ -102,7 +102,7 @@ margin-top:5px;
 cursor:pointer;
 }
 
-/* CARRINHO */
+/* CART */
 #cartBtn{
 position:fixed;
 bottom:20px;
@@ -165,7 +165,7 @@ border-radius:10px;
 <body>
 
 <header>
-🛍️ Minha Loja Pro
+🛍️ Loja Pro
 <div id="gear" onclick="openAdmin()">⚙️</div>
 </header>
 
@@ -209,7 +209,7 @@ border-radius:10px;
 </select>
 
 <button onclick="loginAdmin()">Entrar</button>
-<button onclick="addProduct()">Adicionar</button>
+<button onclick="addProduct()">Adicionar Produto</button>
 <button onclick="closeAdmin()">Fechar</button>
 
 </div>
@@ -261,6 +261,7 @@ list.innerHTML+=`
 <div class="price">R$ ${p.price}</div>
 
 <button onclick="addCart(${i})">Comprar</button>
+<button onclick="editProduct(${i})">Editar</button>
 
 </div>
 </div>`;
@@ -273,7 +274,7 @@ filterCat=c;
 render();
 }
 
-/* CART */
+/* CART COM TOTAL */
 function addCart(i){
 let item=products[i];
 
@@ -293,24 +294,33 @@ function renderCart(){
 let c=document.getElementById("cart");
 c.innerHTML="";
 
+let total=0;
+
 cart.forEach((p,i)=>{
+let subtotal=p.price*p.qty;
+total+=subtotal;
+
 c.innerHTML+=`
 <div class="cartItem">
 <div>
 ${p.name}<br>
-Qtd: ${p.qty}
+Qtd: ${p.qty}<br>
+Total: R$ ${subtotal}
 </div>
 
 <div>
-R$ ${p.price*p.qty}
+<button onclick="p.qty++;renderCart()">+</button>
+<button onclick="p.qty>1?p.qty--:cart.splice(${i},1);renderCart()">-</button>
 </div>
 </div>`;
 });
+
+c.innerHTML+=`<hr><h3>Total: R$ ${total}</h3>`;
 }
 
+/* CART */
 function openCart(){
 document.getElementById("cartModal").classList.add("active");
-renderCart();
 }
 
 function closeCart(){
@@ -320,10 +330,15 @@ document.getElementById("cartModal").classList.remove("active");
 /* WHATSAPP */
 function sendWhatsApp(){
 let msg="🛒 Pedido:%0A";
+let total=0;
 
 cart.forEach(p=>{
-msg+=`- ${p.name} x${p.qty} = R$ ${p.price*p.qty}%0A`;
+let subtotal=p.price*p.qty;
+total+=subtotal;
+msg+=`- ${p.name} x${p.qty} = R$ ${subtotal}%0A`;
 });
+
+msg+=`%0A💰 TOTAL: R$ ${total}`;
 
 window.open("https://wa.me/"+WHATSAPP+"?text="+encodeURIComponent(msg));
 }
@@ -333,14 +348,14 @@ function openAdmin(){
 let p=prompt("Senha admin:");
 
 if(p===ADMIN_PASS){
-document.getElementById("admin").style.display="flex";
+admin.style.display="flex";
 }else{
 alert("Senha incorreta");
 }
 }
 
 function closeAdmin(){
-document.getElementById("admin").style.display="none";
+admin.style.display="none";
 }
 
 /* ADD */
@@ -355,6 +370,21 @@ category:cat.value
 
 render();
 closeAdmin();
+}
+
+/* EDIT */
+function editProduct(i){
+let p=products[i];
+
+let n=prompt("Nome:",p.name);
+let pr=prompt("Preço:",p.price);
+let im=prompt("Imagem:",p.img);
+
+if(n) p.name=n;
+if(pr) p.price=Number(pr);
+if(im) p.img=im;
+
+render();
 }
 
 render();
