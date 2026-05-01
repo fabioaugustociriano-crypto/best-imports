@@ -112,7 +112,6 @@ font-size:18px;
 cursor:pointer;
 ">⚙️</button>
 
-<!-- 🧑‍💻 PAINEL ADMIN -->
 <div id="admin" style="
 position:fixed;
 top:0;
@@ -128,7 +127,14 @@ box-shadow:-2px 0 10px rgba(0,0,0,.2);
 
 <h3>🔐 ADMIN</h3>
 
-<input id="nome" placeholder="Nome"><br><br>
+<!-- 🏷️ NOME DO SITE -->
+<input id="nomeSite" placeholder="Nome do site"><br><br>
+<button onclick="salvarNomeSite()">Salvar nome</button>
+
+<hr>
+
+<!-- ➕ PRODUTO -->
+<input id="nome" placeholder="Nome produto"><br><br>
 <input id="preco" placeholder="Preço"><br><br>
 <input id="imagem" placeholder="URL imagem"><br><br>
 
@@ -138,6 +144,18 @@ box-shadow:-2px 0 10px rgba(0,0,0,.2);
 
 <h4>📦 Produtos</h4>
 <div id="listaAdmin"></div>
+
+<hr>
+
+<button onclick="fecharAdmin()" style="
+background:red;
+color:white;
+padding:8px;
+border:none;
+width:100%;
+">
+Sair do Admin
+</button>
 
 </div>
   
