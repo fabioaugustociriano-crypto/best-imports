@@ -6,12 +6,13 @@
 
 <style>
 *{
+margin:0;
 font-family:Arial;
 color:#000 !important;
+box-sizing:border-box;
 }
 
 body{
-margin:0;
 background:#f5f5f5;
 }
 
@@ -25,7 +26,6 @@ font-weight:bold;
 position:relative;
 }
 
-/* ENGRENAGEM */
 #gear{
 position:absolute;
 right:15px;
@@ -47,6 +47,7 @@ border:none;
 border-radius:20px;
 background:#fff;
 font-weight:bold;
+cursor:pointer;
 }
 
 .cat button.active{
@@ -79,7 +80,6 @@ font-weight:bold;
 font-size:18px;
 }
 
-/* BOTÕES */
 button{
 width:100%;
 padding:12px;
@@ -119,12 +119,13 @@ padding:15px;
 overflow:auto;
 }
 
-#cartModal.active{bottom:0}
+#cartModal.active{
+bottom:0;
+}
 
 .cartItem{
 display:flex;
 justify-content:space-between;
-align-items:center;
 padding:10px;
 border-bottom:1px solid #eee;
 }
@@ -165,11 +166,12 @@ border-radius:10px;
 <button onclick="filter('Monjauro')">Monjauro</button>
 </div>
 
+<!-- PRODUTOS -->
 <div id="list"></div>
 
-<div id="cartBtn" onclick="openCart()">🛒</div>
-
 <!-- CARRINHO -->
+<div id="cartBtn" onclick="openCart()">🛒 Carrinho</div>
+
 <div id="cartModal">
 <h3>Carrinho</h3>
 <div id="cart"></div>
@@ -180,7 +182,7 @@ border-radius:10px;
 <!-- ADMIN -->
 <div id="admin">
 <div class="adminBox">
-<h3>Admin (Senha)</h3>
+<h3>Admin</h3>
 
 <input id="pass" type="password" placeholder="Senha">
 
@@ -188,17 +190,17 @@ border-radius:10px;
 
 <input id="name" placeholder="Nome">
 <input id="price" placeholder="Preço">
-<input id="img" placeholder="URL da imagem">
-<input id="pdf" placeholder="PDF (opcional)">
+<input id="img" placeholder="Imagem URL">
 
 <select id="cat">
 <option>Perfumes</option>
 <option>Monjauro</option>
 </select>
 
-<button onclick="login()">Entrar</button>
+<button onclick="login()">Entrar Admin</button>
 <button onclick="addProduct()">Adicionar Produto</button>
 <button onclick="closeAdmin()">Fechar</button>
+
 </div>
 </div>
 
@@ -211,7 +213,7 @@ let cart=[];
 let filterCat="all";
 
 /* PRODUTOS */
-let products = JSON.parse(localStorage.getItem("products")) || [
+let products = [
 "Tirzec 15 mg ampola unica",
 "Tirzec 15 mg 4 ampolas",
 "Lipoless MD ampola unica",
@@ -232,11 +234,7 @@ img:"https://via.placeholder.com/400x300",
 category:(p.includes("Tirzec")||p.includes("Lipoless")||p.includes("Veltrane")||p.includes("Retatrutide"))?"Monjauro":"Perfumes"
 }));
 
-function save(){
-localStorage.setItem("products",JSON.stringify(products));
-}
-
-/* FILTRO */
+/* FILTER */
 function filter(c){
 filterCat=c;
 render();
@@ -260,11 +258,12 @@ list.innerHTML+=`
 <button onclick="addCart(${i})">Comprar</button>
 
 </div>
-</div>`;
+</div>
+`;
 });
 }
 
-/* CARRINHO */
+/* CART */
 function addCart(i){
 let item=products[i];
 
@@ -285,19 +284,13 @@ c.innerHTML="";
 
 cart.forEach((p,i)=>{
 c.innerHTML+=`
-<div class="cartItem">
 <div>
 ${p.name}<br>
-Qtd: ${p.qty}
+Qtd: ${p.qty}<br>
+R$ ${p.price*p.qty}
 </div>
-
-<div>
-R$ ${p.price*p.qty}<br>
-
-<button onclick="p.qty++;renderCart()">+</button>
-<button onclick="p.qty>1?p.qty--:cart.splice(${i},1);renderCart()">-</button>
-</div>
-</div>`;
+<hr>
+`;
 });
 }
 
@@ -314,20 +307,20 @@ window.open("https://wa.me/"+WHATSAPP+"?text="+encodeURIComponent(msg));
 
 /* ADMIN */
 function openAdmin(){
-let s=prompt("Digite a senha:");
+let p=prompt("Senha admin:");
 
-if(s===ADMIN_PASS){
-admin.style.display="flex";
+if(p===ADMIN_PASS){
+document.getElementById("admin").style.display="flex";
 }else{
 alert("Senha incorreta");
 }
 }
 
 function closeAdmin(){
-admin.style.display="none";
+document.getElementById("admin").style.display="none";
 }
 
-/* ADD PRODUTO */
+/* ADD PRODUCT */
 function addProduct(){
 
 products.push({
@@ -335,11 +328,9 @@ id:Date.now(),
 name:name.value,
 price:Number(price.value),
 img:img.value || "https://via.placeholder.com/400x300",
-pdf:pdf.value,
 category:cat.value
 });
 
-save();
 render();
 closeAdmin();
 }
