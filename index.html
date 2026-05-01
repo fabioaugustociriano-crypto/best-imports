@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Loja Online</title>
+<title>Minha Loja</title>
 
 <style>
 body{
@@ -40,6 +40,11 @@ background:#fff;
 font-weight:bold;
 }
 
+.cat button.active{
+background:#ff6a00;
+color:#fff;
+}
+
 /* PRODUTOS */
 .card{
 background:#fff;
@@ -49,15 +54,7 @@ overflow:hidden;
 box-shadow:0 3px 10px rgba(0,0,0,0.1);
 }
 
-.card img{
-width:100%;
-height:180px;
-object-fit:cover;
-}
-
-.card-body{
-padding:10px;
-}
+.card-body{padding:10px}
 
 .price{
 color:#ff6a00;
@@ -78,7 +75,7 @@ margin-top:8px;
 cursor:pointer;
 }
 
-/* BOTÃO CARRINHO FLUTUANTE */
+/* CARRINHO */
 #cartBtn{
 position:fixed;
 bottom:20px;
@@ -92,7 +89,7 @@ box-shadow:0 5px 15px rgba(0,0,0,0.3);
 cursor:pointer;
 }
 
-/* CARRINHO */
+/* MODAL CARRINHO */
 #cartModal{
 position:fixed;
 bottom:-100%;
@@ -118,26 +115,6 @@ justify-content:space-between;
 padding:10px;
 border-bottom:1px solid #eee;
 }
-
-/* ADMIN OCULTO */
-#adminModal{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.6);
-display:none;
-align-items:center;
-justify-content:center;
-}
-
-.adminBox{
-background:#fff;
-padding:20px;
-border-radius:12px;
-width:90%;
-}
 </style>
 </head>
 
@@ -153,7 +130,7 @@ width:90%;
 <div class="cat">
 <button onclick="filter('all')">Todos</button>
 <button onclick="filter('Perfumes')">Perfumes</button>
-<button onclick="filter('Modulação')">Modulação</button>
+<button onclick="filter('Monjauro')">Monjauro</button>
 </div>
 
 <!-- PRODUTOS -->
@@ -172,24 +149,14 @@ width:90%;
 <button onclick="closeCart()">Fechar</button>
 </div>
 
-<!-- ADMIN OCULTO -->
-<div id="adminModal">
-<div class="adminBox">
-<h3>Senha Admin</h3>
-<input id="pass" type="password" placeholder="Digite a senha">
-<button onclick="login()">Entrar</button>
-</div>
-</div>
-
 <script>
 
 const WHATSAPP = "5585982241638";
-const ADMIN_PASSWORD = "1234";
 
 let cart=[];
 let filterCat="all";
 
-/* 📦 PRODUTOS ORIGINAIS */
+/* 📦 SEUS PRODUTOS */
 let products=[
 "Tirzec 15 mg ampola unica",
 "Tirzec 15 mg 4 ampolas",
@@ -207,12 +174,19 @@ let products=[
 name:p,
 price:0,
 img:"https://via.placeholder.com/400x300",
-category:(p.includes("Tirzec")||p.includes("Lipoless")||p.includes("Veltrane")||p.includes("Retatrutide"))?"Modulação":"Perfumes"
+category:(p.includes("Tirzec")||p.includes("Lipoless")||p.includes("Veltrane")||p.includes("Retatrutide"))?"Monjauro":"Perfumes"
 }));
 
 /* FILTRO */
 function filter(c){
 filterCat=c;
+
+document.querySelectorAll(".cat button").forEach(b=>{
+b.classList.remove("active");
+if(c==="all" && b.innerText==="Todos") b.classList.add("active");
+if(b.innerText===c) b.classList.add("active");
+});
+
 render();
 }
 
@@ -226,7 +200,8 @@ if(filterCat!=="all" && p.category!==filterCat) return;
 
 list.innerHTML+=`
 <div class="card">
-<img src="${p.img}">
+<img src="${p.img}" width="100%">
+
 <div class="card-body">
 <h3>${p.name}</h3>
 <div class="price">R$ ${p.price}</div>
@@ -276,22 +251,6 @@ msg+=`- ${p.name} R$ ${p.price}%0A`;
 });
 
 window.open("https://wa.me/"+WHATSAPP+"?text="+msg);
-}
-
-/* ADMIN */
-document.addEventListener("keydown",function(e){
-if(e.key==="F2"){
-document.getElementById("adminModal").style.display="flex";
-}
-});
-
-function login(){
-if(pass.value===ADMIN_PASSWORD){
-alert("Admin liberado (aqui você pode evoluir painel depois)");
-document.getElementById("adminModal").style.display="none";
-}else{
-alert("Senha errada");
-}
 }
 
 render();
