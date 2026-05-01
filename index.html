@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shopee Store Pro</title>
+<title>Best Imports Pro</title>
 
 <style>
 body{margin:0;font-family:Arial;background:#f5f5f5}
-header{background:#ff4d4f;color:#fff;padding:20px;text-align:center}
+header{background:#7c3aed;color:#fff;text-align:center;padding:20px}
 
 .products{
 display:grid;
@@ -16,14 +16,15 @@ gap:15px;
 padding:20px;
 }
 
-.card{
+.product{
 background:#fff;
 border-radius:12px;
 padding:10px;
 box-shadow:0 2px 8px rgba(0,0,0,.1);
+text-align:center;
 }
 
-.card img{
+.product img{
 width:100%;
 height:140px;
 object-fit:cover;
@@ -36,34 +37,33 @@ border-radius:8px;
 display:block;
 margin-top:8px;
 padding:8px;
-background:#ff4d4f;
+background:#7c3aed;
 color:#fff;
 text-decoration:none;
-text-align:center;
 border-radius:8px;
-}
-
-.admin{
-position:fixed;
-top:0;
-right:0;
-width:320px;
-height:100%;
-background:#fff;
-padding:20px;
-display:none;
-overflow:auto;
 }
 
 .admin-btn{
 position:fixed;
 bottom:20px;
 right:20px;
-background:#ff4d4f;
+background:#22c55e;
 color:#fff;
 padding:12px;
 border-radius:50%;
 cursor:pointer;
+}
+
+.admin{
+position:fixed;
+top:0;
+right:0;
+width:300px;
+height:100%;
+background:#fff;
+padding:20px;
+display:none;
+overflow:auto;
 }
 </style>
 </head>
@@ -71,122 +71,166 @@ cursor:pointer;
 <body>
 
 <header>
-<h2>SHOPEE STORE PRO</h2>
+<h2>BEST IMPORTS PRO</h2>
 </header>
+
+<!-- FILTRO -->
+<select id="filtro" onchange="carregar()" style="margin:10px;">
+<option value="todos">Todos</option>
+<option value="perfume">Perfume</option>
+<option value="monjauro">Monjauro</option>
+</select>
 
 <div class="products" id="produtos"></div>
 
-<div class="admin-btn" onclick="login()">⚙️</div>
+<div class="admin-btn" onclick="abrir()">⚙️</div>
 
 <div class="admin" id="admin">
 
-<h3>Admin Login</h3>
-
-<input id="email" placeholder="email"><br><br>
-<input id="senha" type="password" placeholder="senha"><br><br>
-
-<button onclick="entrar()">Entrar</button>
-
-<hr>
-
-<h3>Adicionar Produto</h3>
+<h3>Admin</h3>
 
 <input id="nome" placeholder="Nome"><br><br>
 <input id="preco" placeholder="Preço"><br><br>
-<input type="file" id="file"><br><br>
+<input id="categoria" placeholder="Categoria"><br><br>
+
+<input id="imagem" placeholder="Link imagem"><br><br>
+<input type="file" id="file" accept="image/*"><br><br>
 
 <button onclick="add()">Salvar</button>
 
 </div>
 
 <!-- FIREBASE -->
-<script type="module">
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { 
-getAuth, signInWithEmailAndPassword 
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+<script>
 
-import {
-getFirestore, collection, addDoc, getDocs, deleteDoc, doc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-import {
-getStorage, ref, uploadBytes, getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-
-// 🔥 SUA CONFIG FIREBASE
+// 🔥 CONFIG FIREBASE
 const firebaseConfig = {
-  apiKey: "SUA_API_KEY",
+  apiKey: "SUA_KEY",
   authDomain: "SEU_DOMINIO",
   projectId: "SEU_ID",
-  storageBucket: "SEU_BUCKET",
-  appId: "SEU_APP"
+  storageBucket: "SEU_BUCKET"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
+firebase.initializeApp(firebaseConfig);
 
-// 🔐 LOGIN
-window.login = function(){
-  document.getElementById("admin").style.display="block";
-}
+const db = firebase.firestore();
+const storage = firebase.storage();
 
-window.entrar = function(){
-  signInWithEmailAndPassword(auth,email.value,senha.value)
-  .then(()=>{
-    alert("Logado!");
-    carregar();
-  })
-  .catch(()=>alert("Erro login"));
-}
+let imagemBase64 = "";
 
-// 📷 UPLOAD IMAGEM + ADD PRODUTO
-window.add = async function(){
-
-const file = document.getElementById("file").files[0];
-
-const storageRef = ref(storage, "produtos/" + file.name);
-await uploadBytes(storageRef, file);
-const url = await getDownloadURL(storageRef);
-
-await addDoc(collection(db,"produtos"),{
-  nome:nome.value,
-  preco:preco.value,
-  imagem:url
+// 📷 imagem galeria
+document.getElementById("file").addEventListener("change", e=>{
+  let file = e.target.files[0];
+  let reader = new FileReader();
+  reader.onload = x=> imagemBase64 = x.target.result;
+  reader.readAsDataURL(file);
 });
 
-alert("Produto salvo!");
-carregar();
+// ⚙️ abrir admin
+function abrir(){
+  if(prompt("Senha:") === "1234"){
+    document.getElementById("admin").style.display="block";
+  }
 }
 
-// 🛍️ LISTAR
-async function carregar(){
+// 📤 upload imagem real
+async function uploadImagem(file){
 
-let div = document.getElementById("produtos");
-div.innerHTML="";
+  let ref = storage.ref("produtos/" + Date.now() + file.name);
+  await ref.put(file);
 
-const snap = await getDocs(collection(db,"produtos"));
+  return await ref.getDownloadURL();
+}
 
-snap.forEach(d=>{
-let p = d.data();
+// ➕ adicionar produto
+async function add(){
 
-div.innerHTML += `
-<div class="card">
-<img src="${p.imagem}">
-<h3>${p.nome}</h3>
-<div class="price">${p.preco}</div>
+  let file = document.getElementById("file").files[0];
+  let url = imagemBase64;
 
-<a class="btn"
-href="https://wa.me/5585982241638?text=Quero ${p.nome}">
-Comprar
-</a>
-</div>
-`;
-});
+  if(file){
+    url = await uploadImagem(file);
+  }
 
+  db.collection("produtos").add({
+    nome:nome.value,
+    preco:preco.value,
+    categoria:categoria.value || "geral",
+    imagem:url,
+    createdAt:Date.now()
+  });
+
+  alert("Produto salvo!");
+  carregar();
+}
+
+// 🛍️ carregar produtos
+function carregar(){
+
+  let div = document.getElementById("produtos");
+  div.innerHTML = "";
+
+  let filtro = document.getElementById("filtro").value;
+
+  db.collection("produtos")
+  .orderBy("createdAt","desc")
+  .get()
+  .then(snapshot=>{
+
+    snapshot.forEach(doc=>{
+      let p = doc.data();
+
+      if(filtro !== "todos" && p.categoria !== filtro) return;
+
+      div.innerHTML += `
+      <div class="product">
+        <img src="${p.imagem}">
+        <h3>${p.nome}</h3>
+        <div class="price">${p.preco}</div>
+
+        <button onclick="editar('${doc.id}','${p.nome}','${p.preco}','${p.imagem}')">
+          Editar
+        </button>
+
+        <button onclick="deletar('${doc.id}')">
+          Excluir
+        </button>
+
+        <a class="btn"
+        href="https://wa.me/5585982241638?text=Quero ${p.nome}">
+        Comprar
+        </a>
+      </div>
+      `;
+    });
+
+  });
+}
+
+// ✏️ editar
+function editar(id,nomeAtual,precoAtual,imgAtual){
+
+  let n = prompt("Nome:",nomeAtual);
+  let p = prompt("Preço:",precoAtual);
+  let i = prompt("Imagem:",imgAtual);
+
+  db.collection("produtos").doc(id).update({
+    nome:n,
+    preco:p,
+    imagem:i
+  });
+
+  carregar();
+}
+
+// ❌ deletar
+function deletar(id){
+  db.collection("produtos").doc(id).delete();
+  carregar();
 }
 
 carregar();
