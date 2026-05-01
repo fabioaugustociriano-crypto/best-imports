@@ -17,7 +17,7 @@ background:#f5f5f5;
 
 header{
 background:linear-gradient(90deg,#ff6a00,#ff8c00);
-color:#fff;
+color:#fff !important;
 padding:18px;
 text-align:center;
 font-size:20px;
@@ -33,7 +33,7 @@ top:15px;
 cursor:pointer;
 }
 
-/* CATEGORIAS */
+/* CATEGORIAS (MANTIDAS) */
 .cat{
 display:flex;
 gap:8px;
@@ -79,6 +79,7 @@ font-weight:bold;
 font-size:18px;
 }
 
+/* BOTÃO COMPRAR */
 button{
 width:100%;
 padding:12px;
@@ -88,9 +89,10 @@ background:linear-gradient(90deg,#ff6a00,#ff8c00);
 color:#fff !important;
 font-weight:bold;
 margin-top:5px;
+cursor:pointer;
 }
 
-/* CART */
+/* CARRINHO */
 #cartBtn{
 position:fixed;
 bottom:20px;
@@ -101,8 +103,10 @@ padding:15px;
 border-radius:50px;
 cursor:pointer;
 font-weight:bold;
+box-shadow:0 5px 15px rgba(0,0,0,0.3);
 }
 
+/* MODAL CARRINHO */
 #cartModal{
 position:fixed;
 bottom:-100%;
@@ -158,6 +162,7 @@ border-radius:10px;
 <div id="gear" onclick="openAdmin()">⚙️</div>
 </header>
 
+<!-- CATEGORIAS RESTAURADAS -->
 <div class="cat">
 <button onclick="filter('all')">Todos</button>
 <button onclick="filter('Perfumes')">Perfumes</button>
@@ -168,7 +173,7 @@ border-radius:10px;
 
 <div id="cartBtn" onclick="openCart()">🛒</div>
 
-<!-- CART -->
+<!-- CARRINHO -->
 <div id="cartModal">
 <h3>Carrinho</h3>
 <div id="cart"></div>
@@ -184,19 +189,15 @@ border-radius:10px;
 <input id="name" placeholder="Nome">
 <input id="price" placeholder="Preço">
 
-<!-- FOTO (UPLOAD OU URL) -->
 <input type="file" id="imgFile">
-
-<!-- PDF -->
-<input id="pdf" placeholder="Link PDF">
+<input id="pdf" placeholder="PDF (link opcional)">
 
 <select id="cat">
 <option>Perfumes</option>
 <option>Monjauro</option>
 </select>
 
-<button onclick="addProduct()">Adicionar Produto</button>
-
+<button onclick="addProduct()">Adicionar</button>
 <button onclick="closeAdmin()">Fechar</button>
 </div>
 </div>
@@ -231,18 +232,17 @@ pdf:"",
 category:(p.includes("Tirzec")||p.includes("Lipoless")||p.includes("Veltrane")||p.includes("Retatrutide"))?"Monjauro":"Perfumes"
 }));
 
-/* SAVE */
 function save(){
 localStorage.setItem("products",JSON.stringify(products));
 }
 
-/* FILTER */
+/* FILTRO */
 function filter(c){
 filterCat=c;
 render();
 }
 
-/* RENDER */
+/* LISTA */
 function render(){
 let list=document.getElementById("list");
 list.innerHTML="";
@@ -258,18 +258,17 @@ list.innerHTML+=`
 <div class="price">R$ ${p.price}</div>
 
 <button onclick="addCart(${i})">Comprar</button>
-<button onclick="remove(${i})">Remover</button>
+
 </div>
-</div>
-`;
+</div>`;
 });
 }
 
-/* CART */
+/* CARRINHO */
 function addCart(i){
-let item = products[i];
+let item=products[i];
 
-let found = cart.find(p=>p.id==item.id);
+let found=cart.find(p=>p.id==item.id);
 
 if(found){
 found.qty++;
@@ -280,7 +279,7 @@ cart.push({...item,qty:1});
 renderCart();
 }
 
-/* CART RENDER */
+/* RENDER CARRINHO */
 function renderCart(){
 let c=document.getElementById("cart");
 c.innerHTML="";
@@ -303,7 +302,7 @@ R$ ${p.price*p.qty}<br>
 });
 }
 
-/* WHATS */
+/* WHATSAPP */
 function sendWhatsApp(){
 let msg="🛒 Pedido:%0A";
 
@@ -323,14 +322,14 @@ function closeAdmin(){
 admin.style.display="none";
 }
 
-/* ADD PRODUCT */
+/* ADD PRODUTO */
 function addProduct(){
 
-let file = document.getElementById("imgFile").files[0];
+let file=document.getElementById("imgFile").files[0];
 
 if(file){
-let reader = new FileReader();
-reader.onload = function(){
+let reader=new FileReader();
+reader.onload=function(){
 saveProduct(reader.result);
 }
 reader.readAsDataURL(file);
@@ -356,11 +355,9 @@ render();
 closeAdmin();
 }
 
-/* REMOVE */
-function remove(i){
-products.splice(i,1);
-save();
-render();
+/* ADMIN CLOSE */
+function closeAdmin(){
+admin.style.display="none";
 }
 
 render();
