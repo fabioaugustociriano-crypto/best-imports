@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Loja Pro</title>
+<title>Minha Loja Pro</title>
 
 <style>
 *{
@@ -13,6 +13,7 @@ box-sizing:border-box;
 
 body{
 background:#f4f6f9;
+color:#111;
 }
 
 /* HEADER */
@@ -33,7 +34,7 @@ top:15px;
 cursor:pointer;
 }
 
-/* CATEGORIAS PROFISSIONAIS */
+/* CATEGORIAS */
 .cat{
 display:flex;
 gap:10px;
@@ -46,15 +47,15 @@ padding:10px 15px;
 border:none;
 border-radius:20px;
 background:#fff;
-box-shadow:0 2px 5px rgba(0,0,0,0.1);
-cursor:pointer;
-white-space:nowrap;
 font-weight:bold;
+cursor:pointer;
+color:#000 !important;
+box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 
 .cat button.active{
 background:#2563eb;
-color:#fff;
+color:#fff !important;
 }
 
 /* PRODUTOS */
@@ -88,6 +89,7 @@ font-weight:bold;
 font-size:18px;
 }
 
+/* BOTÕES */
 button{
 width:100%;
 padding:12px;
@@ -100,7 +102,7 @@ margin-top:5px;
 cursor:pointer;
 }
 
-/* CART */
+/* CARRINHO */
 #cartBtn{
 position:fixed;
 bottom:20px;
@@ -163,7 +165,7 @@ border-radius:10px;
 <body>
 
 <header>
-🛍️ Loja Pro
+🛍️ Minha Loja Pro
 <div id="gear" onclick="openAdmin()">⚙️</div>
 </header>
 
@@ -177,7 +179,7 @@ border-radius:10px;
 <!-- PRODUTOS -->
 <div class="grid" id="list"></div>
 
-<!-- CART -->
+<!-- CARRINHO -->
 <div id="cartBtn" onclick="openCart()">🛒 Carrinho</div>
 
 <div id="cartModal">
@@ -191,9 +193,9 @@ border-radius:10px;
 <div id="admin">
 <div class="adminBox">
 
-<h3>Admin Painel</h3>
+<h3>Admin</h3>
 
-<input id="pass" type="password" placeholder="Senha admin">
+<input id="pass" type="password" placeholder="Senha">
 
 <hr>
 
@@ -206,8 +208,8 @@ border-radius:10px;
 <option>Monjauro</option>
 </select>
 
-<button onclick="login()">Entrar</button>
-<button onclick="addProduct()">Adicionar Produto</button>
+<button onclick="loginAdmin()">Entrar</button>
+<button onclick="addProduct()">Adicionar</button>
 <button onclick="closeAdmin()">Fechar</button>
 
 </div>
@@ -268,10 +270,6 @@ list.innerHTML+=`
 /* FILTER */
 function filter(c){
 filterCat=c;
-
-document.querySelectorAll(".cat button").forEach(b=>b.classList.remove("active"));
-event.target.classList.add("active");
-
 render();
 }
 
@@ -304,16 +302,12 @@ Qtd: ${p.qty}
 </div>
 
 <div>
-R$ ${p.price*p.qty}<br>
-
-<button onclick="p.qty++;renderCart()">+</button>
-<button onclick="p.qty>1?p.qty--:cart.splice(${i},1);renderCart()">-</button>
+R$ ${p.price*p.qty}
 </div>
 </div>`;
 });
 }
 
-/* CART MODAL */
 function openCart(){
 document.getElementById("cartModal").classList.add("active");
 renderCart();
@@ -323,7 +317,7 @@ function closeCart(){
 document.getElementById("cartModal").classList.remove("active");
 }
 
-/* WHATS */
+/* WHATSAPP */
 function sendWhatsApp(){
 let msg="🛒 Pedido:%0A";
 
@@ -339,14 +333,14 @@ function openAdmin(){
 let p=prompt("Senha admin:");
 
 if(p===ADMIN_PASS){
-admin.style.display="flex";
+document.getElementById("admin").style.display="flex";
 }else{
 alert("Senha incorreta");
 }
 }
 
 function closeAdmin(){
-admin.style.display="none";
+document.getElementById("admin").style.display="none";
 }
 
 /* ADD */
