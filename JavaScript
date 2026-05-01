@@ -1,6 +1,7 @@
 
-// 🔐 abrir admin com senha
+// 🔐 abrir admin
 function abrirAdmin(){
+
   let senha = prompt("Senha admin:");
 
   if(senha === "1234"){
@@ -9,6 +10,20 @@ function abrirAdmin(){
   } else {
     alert("Senha incorreta");
   }
+}
+
+// 🚪 sair admin
+function fecharAdmin(){
+  document.getElementById("admin").style.display = "none";
+}
+
+// 🏷️ salvar nome do site
+function salvarNomeSite(){
+
+  let nome = document.getElementById("nomeSite").value;
+
+  document.querySelector("header h2").innerText = nome;
+
 }
 
 // ➕ adicionar produto
@@ -24,7 +39,7 @@ function addProduto(){
   carregarAdmin();
 }
 
-// 📦 listar produtos no admin
+// 📦 listar admin
 function carregarAdmin(){
 
   let div = document.getElementById("listaAdmin");
@@ -37,6 +52,7 @@ function carregarAdmin(){
 
       div.innerHTML += `
       <div style="border:1px solid #ddd;padding:8px;margin-bottom:10px">
+        <img src="${p.imagem}" style="width:100%;height:80px;object-fit:cover"><br>
         <b>${p.nome}</b><br>
         R$ ${p.preco}<br>
 
@@ -56,23 +72,23 @@ function carregarAdmin(){
 }
 
 // ✏️ editar produto
-function editar(id,nomeAtual,precoAtual,imgAtual){
+function editar(id,n,p,i){
 
-  let n = prompt("Nome:",nomeAtual);
-  let p = prompt("Preço:",precoAtual);
-  let i = prompt("Imagem:",imgAtual);
+  let nn = prompt("Nome:", n);
+  let pp = prompt("Preço:", p);
+  let ii = prompt("Imagem:", i);
 
   db.collection("produtos").doc(id).update({
-    nome:n,
-    preco:p,
-    imagem:i
+    nome:nn,
+    preco:pp,
+    imagem:ii
   });
 
   carregar();
   carregarAdmin();
 }
 
-// ❌ deletar produto
+// ❌ deletar
 function deletar(id){
 
   db.collection("produtos").doc(id).delete();
