@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Best Imports</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: #f8fafc;
+  color: #1f2937;
+}
+
+header {
+  text-align: center;
+  padding: 40px;
+  background: linear-gradient(90deg,#7c3aed,#06b6d4);
+  color: white;
+}
+
+.search input {
+  margin-top: 15px;
+  padding: 10px;
+  width: 70%;
+  border-radius: 20px;
+  border: none;
+}
+
+.filters {
+  text-align: center;
+  margin: 20px;
+}
+
+.filters button {
+  padding: 10px;
+  margin: 5px;
+  border: none;
+  border-radius: 20px;
+  background: #7c3aed;
+  color: white;
+  cursor: pointer;
+}
+
+.products {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(160px,1fr));
+  gap: 15px;
+  padding: 20px;
+}
+
+.product {
+  background: white;
+  padding: 10px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.product.monjauro {
+  border: 1px solid #22c55e;
+}
+
+.product img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}
+
+.price {
+  color: #22c55e;
+  font-weight: bold;
+}
+
+.btn {
+  display: block;
+  margin-top: 8px;
+  padding: 8px;
+  background: linear-gradient(90deg,#7c3aed,#06b6d4);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+}
+
+/* BOTÃO ADMIN */
+.admin-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #22c55e;
+  color: white;
+  padding: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* PAINEL */
+.admin-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 300px;
+  height: 100%;
+  background: white;
+  padding: 20px;
+  display: none;
+  box-shadow: -2px 0 10px rgba(0,0,0,0.2);
+  z-index: 99999;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>BEST IMPORTS</h1>
+<p>Perfumes e performance em um só lugar 🔥</p>
+
+<div class="search">
+<input type="text" id="searchInput" placeholder="Buscar..." onkeyup="searchProduct()">
+</div>
+</header>
+
+<div class="filters">
+<button onclick="filter('all')">Todos</button>
+<button onclick="filter('perfume')">Perfumes</button>
+<button onclick="filter('monjauro')">Monjauro</button>
+</div>
+
+<div class="products" id="produtos"></div>
+
+<!-- BOTÃO ADMIN -->
+<div class="admin-btn" onclick="abrirAdmin()">⚙️</div>
+
+<!-- PAINEL -->
+<div class="admin-panel" id="admin">
+<h3>Painel</h3>
+
+<input id="nome" placeholder="Nome"><br><br>
+<input id="preco" placeholder="Preço"><br><br>
+<input id="imagem" placeholder="Link imagem"><br><br>
+
+<select id="categoria">
+<option value="perfume">Perfume</option>
+<option value="monjauro">Monjauro</option>
+</select><br><br>
+
+<button onclick="verificarSenha()">Adicionar</button>
+
+<h4>Produtos:</h4>
+<div id="lista"></div>
+</div>
+
+<script>
+let SENHA = "1234";
+
+let produtos = JSON.parse(localStorage.getItem("produtos")) || [];
+
+// PRODUTOS INICIAIS
+if(produtos.length === 0){
+  produtos = [
+    {nome:"Dior Sauvage", preco:"R$ 399,90", imagem:"https://i.imgur.com/8kP4F5h.jpg", categoria:"perfume"},
+    {nome:"1 Million", preco:"R$ 379,90", imagem:"https://i.imgur.com/Q2Z8Z5B.jpg", categoria:"perfume"},
+    {nome:"TG 15mg", preco:"Consultar", imagem:"https://i.imgur.com/placeholder.jpg", categoria:"monjauro"}
+  ];
+  localStorage.setItem("produtos", JSON.stringify(produtos));
+}
+
+function carregar(){
+  let div = document.getElementById("produtos");
+  div.innerHTML = "";
+
+  produtos.forEach(p=>{
+    div.innerHTML += `
+      <div class="product ${p.categoria}">
+        <img src="${p.imagem}">
+        <h3>${p.nome}</h3>
+        <div class="price">${p.preco}</div>
+        <a class="btn">Comprar</a>
+      </div>
+    `;
+  });
+
+  atualizarLinksWhatsApp();
+  listar();
+}
+
+// 🔥 ATUALIZA BOTÕES WHATS COM NOME + PREÇO + FOTO
+function atualizarLinksWhatsApp(){
+  document.querySelectorAll(".product").forEach(prod => {
+    let nome = prod.querySelector("h3").innerText;
+    let preco = prod.querySelector(".price").innerText;
+    let img = prod.querySelector("img").src;
+
+    let mensagem = `Quero ${nome}\nPreço: ${preco}\nFoto: ${img}`;
+    let url = "https://wa.me/5585982241638?text=" + encodeURIComponent(mensagem);
+
+    prod.querySelector(".btn").href = url;
+  });
+}
+
+function abrirAdmin(){
+  let senha = window.prompt("Digite a senha do painel:");
+  if(senha === null) return;
+
+  if(senha.trim() === SENHA){
+    document.getElementById("admin").style.display = "block";
+  } else {
+    alert("Senha incorreta!");
+  }
+}
+
+function verificarSenha(){
+  let senha = window.prompt("Confirme a senha:");
+  if(senha !== SENHA) return;
+
+  let p = {
+    nome: nome.value,
+    preco: preco.value,
+    imagem: imagem.value,
+    categoria: categoria.value
+  };
+
+  produtos.push(p);
+  localStorage.setItem("produtos", JSON.stringify(produtos));
+  carregar();
+}
+
+function listar(){
+  let lista = document.getElementById("lista");
+  lista.innerHTML = "";
+
+  produtos.forEach((p,i)=>{
+    lista.innerHTML += `
+      <div style="margin-bottom:10px;border-bottom:1px solid #ccc;padding:5px;">
+        <strong>${p.nome}</strong><br>
+        ${p.preco}<br>
+        <button onclick="editarProduto(${i})">Editar</button>
+        <button onclick="delProduto(${i})">Excluir</button>
+      </div>
+    `;
+  });
+}
+
+function editarProduto(i){
+  let senha = window.prompt("Senha para editar:");
+  if(senha !== SENHA) return;
+
+  let p = produtos[i];
+
+  let novoNome = window.prompt("Nome:", p.nome);
+  let novoPreco = window.prompt("Preço:", p.preco);
+  let novaImagem = window.prompt("Imagem:", p.imagem);
+
+  if(novoNome) p.nome = novoNome;
+  if(novoPreco) p.preco = novoPreco;
+  if(novaImagem) p.imagem = novaImagem;
+
+  produtos[i] = p;
+  localStorage.setItem("produtos", JSON.stringify(produtos));
+  carregar();
+}
+
+function delProduto(i){
+  let senha = window.prompt("Senha para excluir:");
+  if(senha === SENHA){
+    produtos.splice(i,1);
+    localStorage.setItem("produtos", JSON.stringify(produtos));
+    carregar();
+  }
+}
+
+function filter(cat){
+  document.querySelectorAll(".product").forEach(p=>{
+    p.style.display = (cat==="all"||p.classList.contains(cat)) ? "block":"none";
+  });
+}
+
+function searchProduct(){
+  let val = document.getElementById("searchInput").value.toLowerCase();
+  document.querySelectorAll(".product").forEach(p=>{
+    p.style.display = p.innerText.toLowerCase().includes(val) ? "block":"none";
+  });
+}
+
+carregar();
+</script>
+
+</body>
+</html>
