@@ -6,106 +6,15 @@
 <title>Best Imports</title>
 
 <style>
-body {
-  margin: 0;
-  font-family: Arial;
-  background: #f8fafc;
-  color: #1f2937;
-}
-
-header {
-  text-align: center;
-  padding: 40px;
-  background: linear-gradient(90deg,#7c3aed,#06b6d4);
-  color: white;
-}
-
-.search input {
-  margin-top: 15px;
-  padding: 10px;
-  width: 70%;
-  border-radius: 20px;
-  border: none;
-}
-
-.filters {
-  text-align: center;
-  margin: 20px;
-}
-
-.filters button {
-  padding: 10px;
-  margin: 5px;
-  border: none;
-  border-radius: 20px;
-  background: #7c3aed;
-  color: white;
-  cursor: pointer;
-}
-
-.products {
-  display: grid;
-  grid-template-columns: repeat(auto-fit,minmax(160px,1fr));
-  gap: 15px;
-  padding: 20px;
-}
-
-.product {
-  background: white;
-  padding: 10px;
-  border-radius: 12px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.product.monjauro {
-  border: 1px solid #22c55e;
-}
-
-.product img {
-  width: 100%;
-  height: 140px;
-  object-fit: cover;
-}
-
-.price {
-  color: #22c55e;
-  font-weight: bold;
-}
-
-.btn {
-  display: block;
-  margin-top: 8px;
-  padding: 8px;
-  background: linear-gradient(90deg,#7c3aed,#06b6d4);
-  color: white;
-  text-decoration: none;
-  border-radius: 8px;
-}
-
-.admin-btn {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #22c55e;
-  color: white;
-  padding: 12px;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.admin-panel {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 300px;
-  height: 100%;
-  background: white;
-  padding: 20px;
-  display: none;
-  box-shadow: -2px 0 10px rgba(0,0,0,0.2);
-  z-index: 99999;
-}
+body{margin:0;font-family:Arial;background:#f8fafc;color:#1f2937}
+header{text-align:center;padding:40px;background:linear-gradient(90deg,#7c3aed,#06b6d4);color:white}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:15px;padding:20px}
+.product{background:white;padding:10px;border-radius:12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.product img{width:100%;height:140px;object-fit:cover;border-radius:8px}
+.price{color:#22c55e;font-weight:bold}
+.btn{display:block;margin-top:8px;padding:8px;background:linear-gradient(90deg,#7c3aed,#06b6d4);color:white;text-decoration:none;border-radius:8px}
+.admin-btn{position:fixed;bottom:20px;right:20px;background:#22c55e;color:white;padding:12px;border-radius:50%;cursor:pointer}
+.admin{position:fixed;top:0;right:0;width:300px;height:100%;background:white;padding:20px;display:none;overflow:auto}
 </style>
 </head>
 
@@ -113,193 +22,118 @@ header {
 
 <header>
 <h1>BEST IMPORTS</h1>
-<p>Perfumes e performance em um só lugar 🔥</p>
-
-<div class="search">
-<input type="text" id="searchInput" placeholder="Buscar..." onkeyup="searchProduct()">
-</div>
+<p>Perfumes e performance 🔥</p>
 </header>
-
-<div class="filters">
-<button onclick="filter('all')">Todos</button>
-<button onclick="filter('perfume')">Perfumes</button>
-<button onclick="filter('monjauro')">Monjauro</button>
-</div>
 
 <div class="products" id="produtos"></div>
 
 <div class="admin-btn" onclick="abrirAdmin()">⚙️</div>
 
-<div class="admin-panel" id="admin">
-<h3>Painel</h3>
+<div class="admin" id="admin">
+<h3>Painel Admin</h3>
 
 <input id="nome" placeholder="Nome"><br><br>
 <input id="preco" placeholder="Preço"><br><br>
-<input id="imagem" placeholder="Link imagem"><br><br>
 
-<!-- NOVO (UPLOAD) -->
-<input type="file" id="fileInput" accept="image/*"><br><br>
+<!-- 📷 FOTO DA GALERIA -->
+<input type="file" id="file" accept="image/*"><br><br>
 
-<select id="categoria">
-<option value="perfume">Perfume</option>
-<option value="monjauro">Monjauro</option>
-</select><br><br>
+<button onclick="add()">Salvar Produto</button>
 
-<button onclick="verificarSenha()">Adicionar</button>
-
-<h4>Produtos:</h4>
+<h4>Produtos</h4>
 <div id="lista"></div>
 </div>
 
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
 <script>
-let SENHA = "1234";
-let imagemBase64 = "";
 
-let produtos = JSON.parse(localStorage.getItem("produtos")) || [];
+// 🔴 COLE SUA CONFIG FIREBASE AQUI
+const firebaseConfig = {
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_AUTH",
+  projectId: "SEU_ID"
+};
 
-if(produtos.length === 0){
-  produtos = [
-    {nome:"Dior Sauvage", preco:"R$ 399,90", imagem:"https://i.imgur.com/8kP4F5h.jpg", categoria:"perfume"},
-    {nome:"1 Million", preco:"R$ 379,90", imagem:"https://i.imgur.com/Q2Z8Z5B.jpg", categoria:"perfume"}
-  ];
-  localStorage.setItem("produtos", JSON.stringify(produtos));
-}
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-// 📷 CAPTURA IMAGEM DO CELULAR
-document.getElementById("fileInput").addEventListener("change", function(){
-  let file = this.files[0];
+let imagem = "";
 
-  if(file){
-    let reader = new FileReader();
-
-    reader.onload = function(e){
-      imagemBase64 = e.target.result;
-      alert("Imagem carregada!");
-    }
-
-    reader.readAsDataURL(file);
-  }
+// 📷 pegar foto da galeria
+document.getElementById("file").addEventListener("change", e=>{
+  let reader = new FileReader();
+  reader.onload = x=> imagem = x.target.result;
+  reader.readAsDataURL(e.target.files[0]);
 });
 
-function carregar(){
-  let div = document.getElementById("produtos");
-  div.innerHTML = "";
+// ⚙️ abrir painel
+function abrirAdmin(){
+  let s = prompt("Senha:");
+  if(s==="1234"){
+    document.getElementById("admin").style.display="block";
+    listar();
+  }
+}
 
-  produtos.forEach(p=>{
-    div.innerHTML += `
-      <div class="product ${p.categoria}">
+// ➕ adicionar produto
+function add(){
+  let p={
+    nome:nome.value,
+    preco:preco.value,
+    imagem:imagem
+  };
+
+  db.collection("produtos").add(p).then(()=>{
+    alert("Produto salvo!");
+    carregar();
+  });
+}
+
+// 🛍️ carregar produtos
+function carregar(){
+  let div=document.getElementById("produtos");
+  div.innerHTML="";
+
+  db.collection("produtos").get().then(snap=>{
+    snap.forEach(doc=>{
+      let p=doc.data();
+
+      div.innerHTML+=`
+      <div class="product">
         <img src="${p.imagem}">
         <h3>${p.nome}</h3>
         <div class="price">${p.preco}</div>
-        <a class="btn">Comprar</a>
-      </div>
-    `;
-  });
-
-  atualizarLinksWhatsApp();
-  listar();
-}
-
-function atualizarLinksWhatsApp(){
-  document.querySelectorAll(".product").forEach(prod => {
-    let nome = prod.querySelector("h3").innerText;
-    let preco = prod.querySelector(".price").innerText;
-    let img = prod.querySelector("img").src;
-
-    let mensagem = `Quero ${nome}\nPreço: ${preco}\nFoto: ${img}`;
-    let url = "https://wa.me/5585982241638?text=" + encodeURIComponent(mensagem);
-
-    prod.querySelector(".btn").href = url;
+        <a class="btn" href="https://wa.me/5585982241638?text=Quero ${p.nome}">Comprar</a>
+      </div>`;
+    });
   });
 }
 
-function abrirAdmin(){
-  let senha = window.prompt("Digite a senha do painel:");
-  if(senha === null) return;
-
-  if(senha.trim() === SENHA){
-    document.getElementById("admin").style.display = "block";
-  } else {
-    alert("Senha incorreta!");
-  }
-}
-
-function verificarSenha(){
-  let senha = window.prompt("Confirme a senha:");
-  if(senha !== SENHA) return;
-
-  let p = {
-    nome: nome.value,
-    preco: preco.value,
-    imagem: imagemBase64 || imagem.value,
-    categoria: categoria.value
-  };
-
-  produtos.push(p);
-  localStorage.setItem("produtos", JSON.stringify(produtos));
-  imagemBase64 = "";
-  fileInput.value = "";
-  carregar();
-}
-
+// 🧾 lista admin
 function listar(){
-  let lista = document.getElementById("lista");
-  lista.innerHTML = "";
+  let lista=document.getElementById("lista");
+  lista.innerHTML="";
 
-  produtos.forEach((p,i)=>{
-    lista.innerHTML += `
-      <div style="margin-bottom:10px;border-bottom:1px solid #ccc;padding:5px;">
-        <strong>${p.nome}</strong><br>
-        ${p.preco}<br>
-        <button onclick="editarProduto(${i})">Editar</button>
-        <button onclick="delProduto(${i})">Excluir</button>
-      </div>
-    `;
+  db.collection("produtos").get().then(snap=>{
+    snap.forEach(doc=>{
+      let p=doc.data();
+
+      lista.innerHTML+=`
+      <div>
+        ${p.nome}
+        <button onclick="del('${doc.id}')">X</button>
+      </div>`;
+    });
   });
 }
 
-function editarProduto(i){
-  let senha = window.prompt("Senha para editar:");
-  if(senha !== SENHA) return;
-
-  let p = produtos[i];
-
-  let novoNome = window.prompt("Nome:", p.nome);
-  let novoPreco = window.prompt("Preço:", p.preco);
-  let novaImagem = window.prompt("Imagem (ou deixa vazio):", "");
-
-  if(novoNome) p.nome = novoNome;
-  if(novoPreco) p.preco = novoPreco;
-  if(novaImagem) p.imagem = novaImagem;
-  if(imagemBase64) p.imagem = imagemBase64;
-
-  produtos[i] = p;
-
-  localStorage.setItem("produtos", JSON.stringify(produtos));
-  imagemBase64 = "";
-  fileInput.value = "";
-  carregar();
-}
-
-function delProduto(i){
-  let senha = window.prompt("Senha para excluir:");
-  if(senha === SENHA){
-    produtos.splice(i,1);
-    localStorage.setItem("produtos", JSON.stringify(produtos));
+// ❌ deletar
+function del(id){
+  db.collection("produtos").doc(id).delete().then(()=>{
     carregar();
-  }
-}
-
-function filter(cat){
-  document.querySelectorAll(".product").forEach(p=>{
-    p.style.display = (cat==="all"||p.classList.contains(cat)) ? "block":"none";
-  });
-}
-
-function searchProduct(){
-  let val = document.getElementById("searchInput").value.toLowerCase();
-  document.querySelectorAll(".product").forEach(p=>{
-    p.style.display = p.innerText.toLowerCase().includes(val) ? "block":"none";
   });
 }
 
