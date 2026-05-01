@@ -25,7 +25,7 @@ font-weight:bold;
 position:relative;
 }
 
-/* ADMIN ICON */
+/* ENGRENAGEM */
 #gear{
 position:absolute;
 right:15px;
@@ -33,7 +33,7 @@ top:15px;
 cursor:pointer;
 }
 
-/* CATEGORIAS (MANTIDAS) */
+/* CATEGORIAS */
 .cat{
 display:flex;
 gap:8px;
@@ -79,7 +79,7 @@ font-weight:bold;
 font-size:18px;
 }
 
-/* BOTÃO COMPRAR */
+/* BOTÕES */
 button{
 width:100%;
 padding:12px;
@@ -103,10 +103,8 @@ padding:15px;
 border-radius:50px;
 cursor:pointer;
 font-weight:bold;
-box-shadow:0 5px 15px rgba(0,0,0,0.3);
 }
 
-/* MODAL CARRINHO */
 #cartModal{
 position:fixed;
 bottom:-100%;
@@ -121,9 +119,7 @@ padding:15px;
 overflow:auto;
 }
 
-#cartModal.active{
-bottom:0;
-}
+#cartModal.active{bottom:0}
 
 .cartItem{
 display:flex;
@@ -162,7 +158,7 @@ border-radius:10px;
 <div id="gear" onclick="openAdmin()">⚙️</div>
 </header>
 
-<!-- CATEGORIAS RESTAURADAS -->
+<!-- CATEGORIAS -->
 <div class="cat">
 <button onclick="filter('all')">Todos</button>
 <button onclick="filter('Perfumes')">Perfumes</button>
@@ -184,20 +180,24 @@ border-radius:10px;
 <!-- ADMIN -->
 <div id="admin">
 <div class="adminBox">
-<h3>Admin</h3>
+<h3>Admin (Senha)</h3>
+
+<input id="pass" type="password" placeholder="Senha">
+
+<hr>
 
 <input id="name" placeholder="Nome">
 <input id="price" placeholder="Preço">
-
-<input type="file" id="imgFile">
-<input id="pdf" placeholder="PDF (link opcional)">
+<input id="img" placeholder="URL da imagem">
+<input id="pdf" placeholder="PDF (opcional)">
 
 <select id="cat">
 <option>Perfumes</option>
 <option>Monjauro</option>
 </select>
 
-<button onclick="addProduct()">Adicionar</button>
+<button onclick="login()">Entrar</button>
+<button onclick="addProduct()">Adicionar Produto</button>
 <button onclick="closeAdmin()">Fechar</button>
 </div>
 </div>
@@ -205,6 +205,7 @@ border-radius:10px;
 <script>
 
 const WHATSAPP = "5585982241638";
+const ADMIN_PASS = "1234";
 
 let cart=[];
 let filterCat="all";
@@ -228,7 +229,6 @@ id:i,
 name:p,
 price:0,
 img:"https://via.placeholder.com/400x300",
-pdf:"",
 category:(p.includes("Tirzec")||p.includes("Lipoless")||p.includes("Veltrane")||p.includes("Retatrutide"))?"Monjauro":"Perfumes"
 }));
 
@@ -242,7 +242,7 @@ filterCat=c;
 render();
 }
 
-/* LISTA */
+/* RENDER */
 function render(){
 let list=document.getElementById("list");
 list.innerHTML="";
@@ -279,7 +279,6 @@ cart.push({...item,qty:1});
 renderCart();
 }
 
-/* RENDER CARRINHO */
 function renderCart(){
 let c=document.getElementById("cart");
 c.innerHTML="";
@@ -310,12 +309,18 @@ cart.forEach(p=>{
 msg+=`- ${p.name} x${p.qty} = R$ ${p.price*p.qty}%0A`;
 });
 
-window.open("https://wa.me/"+WHATSAPP+"?text="+msg);
+window.open("https://wa.me/"+WHATSAPP+"?text="+encodeURIComponent(msg));
 }
 
 /* ADMIN */
 function openAdmin(){
+let s=prompt("Digite a senha:");
+
+if(s===ADMIN_PASS){
 admin.style.display="flex";
+}else{
+alert("Senha incorreta");
+}
 }
 
 function closeAdmin(){
@@ -325,27 +330,11 @@ admin.style.display="none";
 /* ADD PRODUTO */
 function addProduct(){
 
-let file=document.getElementById("imgFile").files[0];
-
-if(file){
-let reader=new FileReader();
-reader.onload=function(){
-saveProduct(reader.result);
-}
-reader.readAsDataURL(file);
-}else{
-saveProduct("https://via.placeholder.com/400x300");
-}
-
-}
-
-function saveProduct(img){
-
 products.push({
 id:Date.now(),
 name:name.value,
 price:Number(price.value),
-img:img,
+img:img.value || "https://via.placeholder.com/400x300",
 pdf:pdf.value,
 category:cat.value
 });
@@ -353,11 +342,6 @@ category:cat.value
 save();
 render();
 closeAdmin();
-}
-
-/* ADMIN CLOSE */
-function closeAdmin(){
-admin.style.display="none";
 }
 
 render();
