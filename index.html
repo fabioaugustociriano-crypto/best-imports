@@ -8,17 +8,18 @@
 *{
 margin:0;
 font-family:Arial;
-color:#000 !important;
 box-sizing:border-box;
+color:#111;
 }
 
 body{
-background:#f5f5f5;
+background:#f4f6f9;
 }
 
+/* HEADER PROFISSIONAL */
 header{
-background:linear-gradient(90deg,#ff6a00,#ff8c00);
-color:#fff !important;
+background:#0d47a1;
+color:#fff;
 padding:18px;
 text-align:center;
 font-size:20px;
@@ -31,6 +32,7 @@ position:absolute;
 right:15px;
 top:15px;
 cursor:pointer;
+color:#fff;
 }
 
 /* CATEGORIAS */
@@ -44,24 +46,25 @@ padding:10px;
 flex:1;
 padding:10px;
 border:none;
-border-radius:20px;
+border-radius:10px;
 background:#fff;
 font-weight:bold;
 cursor:pointer;
+box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 
 .cat button.active{
-background:#ff6a00;
-color:#fff !important;
+background:#1976d2;
+color:#fff;
 }
 
 /* PRODUTOS */
 .card{
 background:#fff;
 margin:10px;
-border-radius:15px;
+border-radius:12px;
 overflow:hidden;
-box-shadow:0 3px 10px rgba(0,0,0,0.1);
+box-shadow:0 2px 10px rgba(0,0,0,0.08);
 }
 
 .card img{
@@ -75,18 +78,19 @@ padding:10px;
 }
 
 .price{
-color:#ff6a00 !important;
+color:#1976d2;
 font-weight:bold;
 font-size:18px;
 }
 
+/* BOTÕES */
 button{
 width:100%;
 padding:12px;
 border:none;
-border-radius:10px;
-background:linear-gradient(90deg,#ff6a00,#ff8c00);
-color:#fff !important;
+border-radius:8px;
+background:#1976d2;
+color:#fff;
 font-weight:bold;
 margin-top:5px;
 cursor:pointer;
@@ -97,7 +101,7 @@ cursor:pointer;
 position:fixed;
 bottom:20px;
 right:20px;
-background:#ff6a00;
+background:#0d47a1;
 color:#fff;
 padding:15px;
 border-radius:50px;
@@ -173,7 +177,7 @@ border-radius:10px;
 <div id="cartBtn" onclick="openCart()">🛒 Carrinho</div>
 
 <div id="cartModal">
-<h3>Carrinho</h3>
+<h3>Seu Carrinho</h3>
 <div id="cart"></div>
 <button onclick="sendWhatsApp()">Finalizar no WhatsApp</button>
 <button onclick="closeCart()">Fechar</button>
@@ -197,8 +201,8 @@ border-radius:10px;
 <option>Monjauro</option>
 </select>
 
-<button onclick="login()">Entrar Admin</button>
-<button onclick="addProduct()">Adicionar Produto</button>
+<button onclick="login()">Entrar</button>
+<button onclick="addProduct()">Adicionar</button>
 <button onclick="closeAdmin()">Fechar</button>
 
 </div>
@@ -213,7 +217,7 @@ let cart=[];
 let filterCat="all";
 
 /* PRODUTOS */
-let products = [
+let products=[
 "Tirzec 15 mg ampola unica",
 "Tirzec 15 mg 4 ampolas",
 "Lipoless MD ampola unica",
@@ -258,8 +262,7 @@ list.innerHTML+=`
 <button onclick="addCart(${i})">Comprar</button>
 
 </div>
-</div>
-`;
+</div>`;
 });
 }
 
@@ -310,19 +313,18 @@ function openAdmin(){
 let p=prompt("Senha admin:");
 
 if(p===ADMIN_PASS){
-document.getElementById("admin").style.display="flex";
+admin.style.display="flex";
 }else{
 alert("Senha incorreta");
 }
 }
 
 function closeAdmin(){
-document.getElementById("admin").style.display="none";
+admin.style.display="none";
 }
 
-/* ADD PRODUCT */
+/* ADD */
 function addProduct(){
-
 products.push({
 id:Date.now(),
 name:name.value,
