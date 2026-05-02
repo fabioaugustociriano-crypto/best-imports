@@ -3,200 +3,127 @@
 <head>
 <meta charset="UTF-8">
 <title>Best Imports</title>
-
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
-<style>
-body{margin:0;font-family:Arial;background:#f4f6f9}
-header{background:#111827;color:#fff;padding:15px;text-align:center;position:relative}
-#gear{position:absolute;right:15px;top:15px;cursor:pointer}
-
-.cat{display:flex;gap:10px;padding:10px;overflow-x:auto}
-.cat button{padding:10px;border:none;border-radius:20px;background:#fff;font-weight:bold}
-
-.grid{display:grid;gap:10px;padding:10px}
-.card{background:#fff;border-radius:10px;overflow:hidden}
-.card img{width:100%;height:180px;object-fit:cover}
-.card-body{padding:10px}
-
-button{width:100%;padding:10px;border:none;background:#2563eb;color:#fff;border-radius:8px}
-
-#cartBtn{position:fixed;bottom:20px;right:20px;background:#111827;color:#fff;padding:15px;border-radius:50%}
-
-/* ADMIN */
-#admin{
-position:fixed;inset:0;
-background:rgba(0,0,0,.6);
-display:none;
-align-items:center;
-justify-content:center;
-}
-
-.adminBox{
-background:#fff;padding:15px;width:95%;max-width:800px;border-radius:12px
-}
-</style>
 </head>
 
 <body>
 
-<header>
-🛍️ Best Imports
-<div id="gear" onclick="openAdmin()">⚙️</div>
-</header>
-
-<div class="cat">
-<button onclick="setFilter('all')">Todos</button>
-<button onclick="setFilter('Monjauro')">Monjauro</button>
-<button onclick="setFilter('Perfume')">Perfume</button>
-</div>
-
-<div class="grid" id="list"></div>
-
-<div id="cartBtn" onclick="finish()">🛒</div>
-
-<!-- ADMIN -->
-<div id="admin">
-<div class="adminBox">
-
-<h3>Admin</h3>
+<h2>Best Imports</h2>
 
 <input id="pass" type="password" placeholder="Senha">
 <button onclick="login()">Entrar</button>
 
 <div id="panel" style="display:none">
 
-<hr>
+<h3>Adicionar Produto</h3>
 
-<input id="pName" placeholder="Nome">
-<input id="pPrice" placeholder="Preço">
-<input id="pImg" placeholder="Imagem URL">
+<input id="name" placeholder="Nome"><br>
+<input id="price" placeholder="Preço"><br>
+<input id="img" placeholder="Imagem URL"><br>
 
-<select id="pCat">
-<option>Perfume</option>
-<option>Monjauro</option>
+<select id="cat">
+  <option>Perfume</option>
+  <option>Monjauro</option>
 </select>
 
-<button onclick="add()">Adicionar</button>
+<button onclick="addProduct()">Adicionar</button>
 
 <hr>
 
-<div id="adminList"></div>
+<h3>Produtos</h3>
+<div id="list"></div>
 
 </div>
 
-<button onclick="closeAdmin()">Fechar</button>
+<script type="module">
 
-</div>
-</div>
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  deleteDoc,
+  doc,
+  updateDoc,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
-<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBmbDy3WAMmIGrbDJHrQiC3-QX_ASzLUbI",
+  authDomain: "best-imports-b25a5.firebaseapp.com",
+  databaseURL: "https://best-imports-b25a5-default-rtdb.firebaseio.com",
+  projectId: "best-imports-b25a5",
+  storageBucket: "best-imports-b25a5.firebasestorage.app",
+  messagingSenderId: "1005080108441",
+  appId: "1:1005080108441:web:85184a829b26c4bda30708",
+  measurementId: "G-JNJ49FPNEH"
+};
 
-/* FIREBASE */
-  const firebaseConfig = {
-    apiKey: "AIzaSyBmbDy3WAMmIGrbDJHrQiC3-QX_ASzLUbI",
-    authDomain: "best-imports-b25a5.firebaseapp.com",
-    databaseURL: "https://best-imports-b25a5-default-rtdb.firebaseio.com",
-    projectId: "best-imports-b25a5",
-    storageBucket: "best-imports-b25a5.firebasestorage.app",
-    messagingSenderId: "1005080108441",
-    appId: "1:1005080108441:web:85184a829b26c4bda30708",
-    measurementId: "G-JNJ49FPNEH"
-  };
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-/* STATE */
-let products=[];
-let cart=[];
-let filter="all";
-const WHATSAPP="5585982241638";
-
-/* LOAD */
-db.collection("products").onSnapshot(snap=>{
-products=[];
-snap.forEach(d=>{
-products.push({id:d.id,...d.data()});
-});
-render();
-});
-
-/* FILTER */
-function setFilter(f){
-filter=f;
-render();
+/* LOGIN SIMPLES */
+window.login = function(){
+if(pass.value === "1234"){
+document.getElementById("panel").style.display = "block";
+load();
+}else{
+alert("Senha incorreta");
+}
 }
 
-/* RENDER */
-function render(){
-let el=document.getElementById("list");
-el.innerHTML="";
+/* ADD PRODUTO */
+window.addProduct = async function(){
 
-products.forEach(p=>{
-if(filter!=="all" && p.category!==filter) return;
+await addDoc(collection(db,"products"),{
+name:name.value,
+price:Number(price.value),
+img:img.value,
+category:cat.value
+});
 
-el.innerHTML+=`
-<div class="card">
-<img src="${p.img}">
-<div class="card-body">
+}
+
+/* LISTAR */
+function load(){
+
+onSnapshot(collection(db,"products"), snap=>{
+
+let list = document.getElementById("list");
+list.innerHTML = "";
+
+snap.forEach(d=>{
+
+let p = d.data();
+
+list.innerHTML += `
+<div style="border:1px solid #ccc;padding:10px;margin:10px">
 <h3>${p.name}</h3>
 <p>R$ ${p.price}</p>
-<button onclick="addCart('${p.id}')">Comprar</button>
+
+<button onclick="del('${d.id}')">Deletar</button>
 </div>
-</div>`;
-});
-}
+`;
 
-/* CART */
-function addCart(id){
-let p=products.find(x=>x.id===id);
-let f=cart.find(x=>x.id===id);
-
-if(f) f.qty++;
-else cart.push({...p,qty:1});
-}
-
-/* WHATSAPP */
-function finish(){
-let msg="🛒 Pedido:%0A";
-let total=0;
-
-cart.forEach(p=>{
-let t=p.price*p.qty;
-total+=t;
-msg+=`- ${p.name} x${p.qty} = R$ ${t}%0A`;
 });
 
-msg+=`%0A💰 TOTAL: R$ ${total}`;
-
-window.open("https://wa.me/"+WHATSAPP+"?text="+encodeURIComponent(msg));
-}
-
-/* ADMIN */
-function openAdmin(){
-document.getElementById("admin").style.display="flex";
-}
-
-function closeAdmin(){
-document.getElementById("admin").style.display="none";
-document.getElementById("panel").style.display="none";
-}
-
-function login(){
-if(pass.value==="1234"){
-document.getElementById("panel").style.display="block";
-}else alert("Senha errada");
-}
-
-function add(){
-db.collection("products").add({
-name:pName.value,
-price:Number(pPrice.value),
-img:pImg.value,
-category:pCat.value
 });
+
+}
+
+/* DELETE */
+window.del = async function(id){
+await deleteDoc(doc(db,"products",id));
+}
+
+/* EDIT SIMPLES */
+window.edit = async function(id){
+
+let newPrice = prompt("Novo preço:");
+
+await updateDoc(doc(db,"products",id),{
+price:Number(newPrice)
+});
+
 }
 
 </script>
