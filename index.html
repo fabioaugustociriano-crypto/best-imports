@@ -77,6 +77,10 @@ list.innerHTML += `
 <h3>${p.name}</h3>
 <p>R$ ${p.price}</p>
 <button onclick="addToCart(${index})">Comprar</button>
+${logged ? `
+<button onclick="editProduct(${index})">Editar</button>
+<button onclick="deleteProduct(${index})">Excluir</button>
+` : ""}
 </div>
 `;
 });
@@ -109,6 +113,55 @@ renderProducts();
 };
 
 if (file) reader.readAsDataURL(file);
+}
+
+function editProduct(index) {
+if (!logged) return alert("Faça login");
+
+const p = products[index];
+
+const newName = prompt("Novo nome:", p.name);
+const newPrice = prompt("Novo preço:", p.price);
+const newCategory = prompt("Categoria (monjauro ou perfume):", p.category);
+
+if (newName) p.name = newName;
+if (newPrice) p.price = newPrice;
+if (newCategory) p.category = newCategory;
+
+if (confirm("Deseja trocar a imagem?")) {
+const input = document.createElement("input");
+input.type = "file";
+
+input.onchange = e => {
+const file = e.target.files[0];
+const reader = new FileReader();
+
+reader.onload = function(ev) {
+p.image = ev.target.result;
+saveProducts();
+};
+
+reader.readAsDataURL(file);
+};
+
+input.click();
+} else {
+saveProducts();
+}
+}
+
+function deleteProduct(index) {
+if (!logged) return alert("Faça login");
+
+if (confirm("Tem certeza que deseja excluir este produto?")) {
+products.splice(index, 1);
+saveProducts();
+}
+}
+
+function saveProducts() {
+localStorage.setItem("products", JSON.stringify(products));
+renderProducts();
 }
 
 function login() {
