@@ -1,263 +1,84 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<title>Best Imports</title>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc } 
+from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
-<style>
-body{margin:0;font-family:Arial;background:#f4f6f9}
+import { getAuth, signInWithEmailAndPassword } 
+from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
 
-header{
-background:#111827;
-color:#fff;
-padding:15px;
-text-align:center;
-position:relative;
-}
+import { getStorage, ref, uploadBytes, getDownloadURL } 
+from "https://www.gstatic.com/firebasejs/12.12.1/firebase-storage.js";
 
-#gear{
-position:absolute;
-right:15px;
-top:15px;
-cursor:pointer;
-}
-
-.cat{
-display:flex;
-gap:10px;
-padding:10px;
-overflow-x:auto;
-}
-
-.cat button{
-padding:10px;
-border:none;
-border-radius:20px;
-background:#fff;
-font-weight:bold;
-cursor:pointer;
-}
-
-.grid{
-display:grid;
-gap:10px;
-padding:10px;
-}
-
-.card{
-background:#fff;
-border-radius:10px;
-overflow:hidden;
-box-shadow:0 2px 10px rgba(0,0,0,0.08);
-}
-
-.card img{
-width:100%;
-height:180px;
-object-fit:cover;
-}
-
-.card-body{padding:10px}
-
-button{
-width:100%;
-padding:10px;
-border:none;
-border-radius:8px;
-background:#2563eb;
-color:#fff;
-font-weight:bold;
-cursor:pointer;
-}
-
-#cartBtn{
-position:fixed;
-bottom:20px;
-right:20px;
-background:#111827;
-color:#fff;
-padding:15px;
-border-radius:50%;
-cursor:pointer;
-}
-
-/* ADMIN */
-#admin{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.6);
-display:none;
-align-items:center;
-justify-content:center;
-}
-
-.adminBox{
-background:#fff;
-width:95%;
-max-width:700px;
-padding:15px;
-border-radius:10px;
-}
-</style>
-</head>
-
-<body>
-
-<header>
-🛍️ Best Imports
-<div id="gear" onclick="openAdmin()">⚙️</div>
-</header>
-
-<div class="cat">
-<button onclick="filter('all')">Todos</button>
-<button onclick="filter('Monjauro')">Monjauro</button>
-<button onclick="filter('Perfume')">Perfume</button>
-</div>
-
-<div class="grid" id="list"></div>
-
-<div id="cartBtn" onclick="sendWhatsApp()">🛒</div>
-
-<!-- ADMIN -->
-<div id="admin">
-<div class="adminBox">
-
-<h3>Admin</h3>
-
-<input id="pass" type="password" placeholder="Senha">
-<button onclick="login()">Entrar</button>
-
-<div id="panel" style="display:none">
-
-<input id="name" placeholder="Nome">
-<input id="price" placeholder="Preço">
-<input id="img" placeholder="Imagem URL">
-
-<select id="cat">
-<option>Perfume</option>
-<option>Monjauro</option>
-</select>
-
-<button onclick="add()">Adicionar</button>
-
-</div>
-
-<button onclick="closeAdmin()">Fechar</button>
-
-</div>
-</div>
-
-<script>
-
-/* FIREBASE */
+/* 🔥 FIREBASE CONFIG */
 const firebaseConfig = {
-  apiKey: "SUA_API_KEY",
-  authDomain: "SEU_PROJETO.firebaseapp.com",
-  projectId: "SEU_PROJETO"
+  apiKey: "AIzaSyBmbDy3WAMmIGrbDJHrQiC3-QX_ASzLUbI",
+  authDomain: "best-imports-b25a5.firebaseapp.com",
+  databaseURL: "https://best-imports-b25a5-default-rtdb.firebaseio.com",
+  projectId: "best-imports-b25a5",
+  storageBucket: "best-imports-b25a5.appspot.com",
+  messagingSenderId: "1005080108441",
+  appId: "1:1005080108441:web:4d19fcf902add5b7a30708"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+/* INIT */
+const app = initializeApp(firebaseConfig);
 
-/* DADOS */
-let products = [];
-let cart = [];
-let filterCat = "all";
-const WHATSAPP = "5585982241638";
+/* SERVICES */
+const db = getFirestore(app);
+const auth = getAuth(app);
+const storage = getStorage(app);
 
-/* CARREGAR */
-db.collection("products").onSnapshot(snapshot=>{
-products = [];
+/* EXPOR GLOBAL (para seu site antigo funcionar sem mudar tudo) */
+window.db = db;
+window.auth = auth;
+window.storage = storage;
 
-snapshot.forEach(doc=>{
-products.push({id:doc.id,...doc.data()});
+window.firestore = {
+  collection,
+  addDoc,
+  onSnapshot,
+  updateDoc,
+  deleteDoc,
+  doc
+};
+
+window.storageRef = ref;
+window.uploadBytes = uploadBytes;
+window.getDownloadURL = getDownloadURL;
+
+/* =========================
+   🔥 BASE SHOPEE READY
+========================= */
+
+/* PRODUTOS */
+window.products = [];
+firestore.onSnapshot(firestore.collection(db,"products"), snap=>{
+  products = [];
+  snap.forEach(d=>products.push({id:d.id,...d.data()}));
+  console.log("PRODUTOS:", products);
 });
 
-render();
+/* PEDIDOS (DASHBOARD) */
+window.orders = [];
+firestore.onSnapshot(firestore.collection(db,"orders"), snap=>{
+  orders = [];
+  snap.forEach(d=>orders.push({id:d.id,...d.data()}));
+  console.log("ORDERS:", orders);
 });
 
-/* FILTRO */
-function filter(c){
-filterCat=c;
-render();
-}
+/* ADD PRODUTO */
+window.addProduct = async function(p){
+  await firestore.addDoc(firestore.collection(db,"products"),p);
+};
 
-/* RENDER */
-function render(){
-let list=document.getElementById("list");
-list.innerHTML="";
+/* UPDATE PRODUTO */
+window.updateProduct = async function(id,data){
+  await firestore.updateDoc(firestore.doc(db,"products",id),data);
+};
 
-products.forEach(p=>{
-
-if(filterCat !== "all" && p.category !== filterCat) return;
-
-list.innerHTML += `
-<div class="card">
-<img src="${p.img}">
-<div class="card-body">
-<h3>${p.name}</h3>
-<p>R$ ${p.price}</p>
-<button onclick="addCart('${p.id}')">Comprar</button>
-</div>
-</div>`;
-});
-}
-
-/* CARRINHO */
-function addCart(id){
-let p = products.find(x=>x.id===id);
-
-let f = cart.find(x=>x.id===id);
-
-if(f) f.qty++;
-else cart.push({...p,qty:1});
-}
-
-/* WHATSAPP */
-function sendWhatsApp(){
-
-let msg="🛒 Pedido:%0A";
-let total=0;
-
-cart.forEach(p=>{
-let t=p.price*p.qty;
-total+=t;
-msg+=`- ${p.name} x${p.qty} = R$ ${t}%0A`;
-});
-
-msg+=`%0A💰 TOTAL: R$ ${total}`;
-
-window.open("https://wa.me/"+WHATSAPP+"?text="+encodeURIComponent(msg));
-}
-
-/* ADMIN */
-function openAdmin(){
-document.getElementById("admin").style.display="flex";
-}
-
-function closeAdmin(){
-document.getElementById("admin").style.display="none";
-document.getElementById("panel").style.display="none";
-}
-
-function login(){
-if(pass.value==="1234"){
-document.getElementById("panel").style.display="block";
-}else{
-alert("Senha errada");
-}
-}
-
-function add(){
-db.collection("products").add({
-name:name.value,
-price:Number(price.value),
-img:img.value,
-category:cat.value
-});
-}
+/* DELETE */
+window.deleteProduct = async function(id){
+  await firestore.deleteDoc(firestore.doc(db,"products",id));
+};
 
 </script>
-
-</body>
-</html>
