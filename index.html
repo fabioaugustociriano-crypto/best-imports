@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Loja Atualizada</title>
+<title>Best Imports</title>
 
 <style>
 *{margin:0;font-family:Arial;box-sizing:border-box}
@@ -93,7 +93,7 @@ border-radius:50px;
 cursor:pointer;
 }
 
-/* MODAL */
+/* CART MODAL */
 #cartModal{
 position:fixed;
 bottom:-100%;
@@ -120,21 +120,21 @@ border-bottom:1px solid #eee;
 /* ADMIN */
 #admin{
 position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.6);
+inset:0;
+background:rgba(0,0,0,.6);
 display:none;
 align-items:center;
 justify-content:center;
 }
 
 .adminBox{
-background:#fff;
-padding:20px;
 width:95%;
-border-radius:10px;
+max-width:900px;
+background:#fff;
+border-radius:12px;
+padding:15px;
+max-height:90vh;
+overflow:auto;
 }
 </style>
 </head>
@@ -142,7 +142,7 @@ border-radius:10px;
 <body>
 
 <header>
-🛍️ Loja Atualizada
+🛍️ Best Imports
 <div id="gear" onclick="openAdmin()">⚙️</div>
 </header>
 
@@ -170,25 +170,38 @@ border-radius:10px;
 <div id="admin">
 <div class="adminBox">
 
-<h3>Admin</h3>
+<h2>⚙️ Painel Admin</h2>
 
-<input id="pass" type="password" placeholder="Senha">
+<input id="adminPass" type="password" placeholder="Senha admin" style="width:100%;padding:10px;margin:5px 0">
+<button onclick="adminLogin()" style="width:100%">Entrar</button>
 
 <hr>
 
-<input id="name" placeholder="Nome">
-<input id="price" placeholder="Preço">
-<input id="img" placeholder="Imagem URL">
+<div id="adminArea" style="display:none">
 
-<select id="cat">
+<h3>➕ Novo Produto</h3>
+
+<input id="pName" placeholder="Nome" style="width:100%;padding:8px;margin:5px 0">
+<input id="pPrice" placeholder="Preço" style="width:100%;padding:8px;margin:5px 0">
+
+<input type="file" id="pFile" accept="image/*,application/pdf" style="width:100%;margin:5px 0">
+
+<select id="pCat" style="width:100%;padding:8px;margin:5px 0">
 <option>Perfumes</option>
 <option>Monjauro</option>
 <option>Mundial</option>
 </select>
 
-<button onclick="login()">Entrar</button>
-<button onclick="addProduct()">Adicionar Produto</button>
-<button onclick="closeAdmin()">Fechar</button>
+<button onclick="addAdminProduct()">Adicionar</button>
+
+<hr>
+
+<h3>📦 Produtos</h3>
+<div id="adminList"></div>
+
+</div>
+
+<button onclick="closeAdmin()" style="margin-top:10px;width:100%">Fechar</button>
 
 </div>
 </div>
@@ -200,28 +213,28 @@ const ADMIN_PASS="1234";
 
 let cart=[];
 let filterCat="all";
+let uploaded="";
 
-/* PRODUTOS (NUNCA MAIS SOME) */
+/* PRODUTOS */
 let products = JSON.parse(localStorage.getItem("products") || "[]");
 
 if(products.length === 0){
 products=[
-{ id:1, name:"Tirzec 15 mg ampola unica", price:0, img:"https://via.placeholder.com/400x300", category:"Monjauro" },
-{ id:2, name:"Lipoless MD ampola unica", price:0, img:"https://via.placeholder.com/400x300", category:"Monjauro" },
-{ id:3, name:"Veltrane 90 mg", price:0, img:"https://via.placeholder.com/400x300", category:"Perfumes" },
-{ id:4, name:"Sabah", price:0, img:"https://via.placeholder.com/400x300", category:"Perfumes" }
+{ id:1, name:"Tirzec 15 mg", price:0, img:"https://via.placeholder.com/400x300", category:"Monjauro" },
+{ id:2, name:"Lipoless MD", price:0, img:"https://via.placeholder.com/400x300", category:"Monjauro" },
+{ id:3, name:"Veltrane 90mg", price:0, img:"https://via.placeholder.com/400x300", category:"Perfumes" }
 ];
 
 localStorage.setItem("products", JSON.stringify(products));
 }
 
-/* FILTER CORRIGIDO */
+/* FILTER */
 function filter(c){
-filterCat = c;
+filterCat=c;
 render();
 }
 
-/* RENDER PRODUTOS */
+/* RENDER */
 function render(){
 let list=document.getElementById("list");
 list.innerHTML="";
@@ -273,7 +286,7 @@ c.innerHTML+=`
 <b>${p.name}</b><br>
 
 Qtd:
-<input type="number" min="1" value="${p.qty}"
+<input type="number" value="${p.qty}" min="1"
 onchange="cart[${i}].qty=Number(this.value);renderCart()"
 style="width:60px">
 
@@ -319,34 +332,104 @@ window.open("https://wa.me/"+WHATSAPP+"?text="+encodeURIComponent(msg));
 
 /* ADMIN */
 function openAdmin(){
-let p=prompt("Senha admin:");
+document.getElementById("admin").style.display="flex";
+}
+
+function closeAdmin(){
+document.getElementById("admin").style.display="none";
+document.getElementById("adminArea").style.display="none";
+}
+
+function adminLogin(){
+let p=document.getElementById("adminPass").value;
 
 if(p===ADMIN_PASS){
-document.getElementById("admin").style.display="flex";
+document.getElementById("adminArea").style.display="block";
+renderAdminList();
 }else{
 alert("Senha incorreta");
 }
 }
 
-function closeAdmin(){
-document.getElementById("admin").style.display="none";
+/* UPLOAD */
+document.addEventListener("change",function(e){
+if(e.target.id==="pFile"){
+let file=e.target.files[0];
+
+let reader=new FileReader();
+reader.onload=function(){
+uploaded=reader.result;
+};
+reader.readAsDataURL(file);
 }
+});
 
 /* ADD */
-function addProduct(){
+function addAdminProduct(){
 
 products.push({
 id:Date.now(),
-name:name.value,
-price:Number(price.value),
-img:img.value || "https://via.placeholder.com/400x300",
-category:cat.value
+name:pName.value,
+price:Number(pPrice.value),
+img:uploaded || "https://via.placeholder.com/400x300",
+category:pCat.value
 });
 
-localStorage.setItem("products", JSON.stringify(products));
+localStorage.setItem("products",JSON.stringify(products));
+
+uploaded="";
+render();
+renderAdminList();
+}
+
+/* ADMIN LIST */
+function renderAdminList(){
+let box=document.getElementById("adminList");
+box.innerHTML="";
+
+products.forEach((p,i)=>{
+
+box.innerHTML+=`
+<div style="display:flex;justify-content:space-between;padding:10px;background:#f4f6f9;margin:5px 0;border-radius:10px">
+
+<div>
+<b>${p.name}</b><br>
+R$ ${p.price}
+</div>
+
+<div style="display:flex;gap:5px">
+<button onclick="editAdmin(${i})">Editar</button>
+<button onclick="deleteAdmin(${i})" style="background:red;color:#fff">Excluir</button>
+</div>
+
+</div>`;
+});
+}
+
+function editAdmin(i){
+let p=products[i];
+
+let n=prompt("Nome:",p.name);
+let pr=prompt("Preço:",p.price);
+let cat=prompt("Categoria:",p.category);
+
+if(n) p.name=n;
+if(pr) p.price=Number(pr);
+if(cat) p.category=cat;
+
+localStorage.setItem("products",JSON.stringify(products));
 
 render();
-closeAdmin();
+renderAdminList();
+}
+
+function deleteAdmin(i){
+products.splice(i,1);
+
+localStorage.setItem("products",JSON.stringify(products));
+
+render();
+renderAdminList();
 }
 
 render();
