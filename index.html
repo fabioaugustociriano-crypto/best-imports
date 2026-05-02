@@ -12,7 +12,7 @@ header { background:#000; color:#fff; padding:15px; text-align:center; }
 .card { background:#fff; padding:10px; border-radius:10px; text-align:center; }
 .card img { width:100%; border-radius:10px; }
 button { background:#000; color:#fff; border:none; padding:10px; margin-top:10px; cursor:pointer; border-radius:5px; }
-#cart { position:fixed; right:10px; top:10px; background:#fff; padding:10px; border-radius:10px; }
+#cart { position:fixed; right:10px; top:10px; background:#fff; padding:10px; border-radius:10px; cursor:pointer; }
 #admin { display:none; background:#fff; padding:15px; margin-top:20px; border-radius:10px; }
 input, select { padding:8px; margin:5px 0; width:100%; }
 </style>
@@ -25,7 +25,7 @@ input, select { padding:8px; margin:5px 0; width:100%; }
 <button onclick="logout()">Sair</button>
 </header>
 
-<div id="cart">
+<div id="cart" onclick="openCart()">
 🛒 <span id="cartCount">0</span>
 <button onclick="sendWhats()">Finalizar</button>
 </div>
@@ -80,17 +80,14 @@ let products = [];
 let cart = [];
 let logged = false;
 
-// 🔄 Carregar produtos do Firebase
 db.ref("products").on("value", snapshot => {
 products = [];
-
 snapshot.forEach(item => {
 products.push({
 id: item.key,
 ...item.val()
 });
 });
-
 renderProducts();
 });
 
@@ -119,8 +116,53 @@ ${logged ? `
 }
 
 function addToCart(index) {
-cart.push(products[index]);
-document.getElementById("cartCount").innerText = cart.length;
+const item = cart.find(p => p.id === products[index].id);
+
+if (item) {
+item.qty += 1;
+} else {
+cart.push({...products[index], qty: 1});
+}
+
+updateCart();
+}
+
+function updateCart() {
+document.getElementById("cartCount").innerText = cart.reduce((a,b)=>a+b.qty,0);
+}
+
+function openCart() {
+let text = "🛒 Seu Carrinho:\n\n";
+
+cart.forEach((p, i) => {
+text += `${i} - ${p.name}\nQtd: ${p.qty} | R$ ${p.price}\n\n`;
+});
+
+const total = cart.reduce((sum, p) => sum + (p.price * p.qty), 0);
+
+text += `Total: R$ ${total}`;
+
+let action = prompt(text + "\n\nDigite o número do item para alterar quantidade ou 'ok' para finalizar:");
+
+if (action === "ok") {
+sendWhats();
+return;
+}
+
+const index = parseInt(action);
+
+if (!isNaN(index) && cart[index]) {
+let newQty = prompt("Nova quantidade:", cart[index].qty);
+
+if (newQty > 0) {
+cart[index].qty = parseInt(newQty);
+} else {
+cart.splice(index, 1);
+}
+
+updateCart();
+openCart();
+}
 }
 
 function addProduct() {
@@ -209,10 +251,14 @@ renderProducts();
 
 function sendWhats() {
 let msg = "Pedido:%0A";
+let total = 0;
 
 cart.forEach(p => {
-msg += `- ${p.name} R$${p.price}%0A`;
+msg += `- ${p.name} x${p.qty} R$${p.price}%0A`;
+total += p.price * p.qty;
 });
+
+msg += `%0ATotal: R$${total}`;
 
 window.open(`https://wa.me/5585982241638?text=${msg}`);
 }
