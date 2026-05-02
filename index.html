@@ -33,28 +33,36 @@ input, select { padding:8px; margin:5px 0; width:100%; }
 <div class="container">
 
 <select id="categoryFilter" onchange="renderProducts()">
-  <option value="all">Todos</option>
-  <option value="monjauro">Monjauro</option>
-  <option value="perfume">Perfume</option>
+<option value="all">Todos</option>
+<option value="monjauro">Monjauro</option>
+<option value="perfume">Perfume</option>
 </select>
 
 <div class="products" id="productList"></div>
 
 <div id="admin">
 <h2>Painel Admin</h2>
-
 <input type="text" id="newName" placeholder="Nome do produto">
 <input type="number" id="newPrice" placeholder="Preço">
 <input type="file" id="newImage">
-
 <select id="newCategory">
-  <option value="monjauro">Monjauro</option>
-  <option value="perfume">Perfume</option>
+<option value="monjauro">Monjauro</option>
+<option value="perfume">Perfume</option>
 </select>
-
 <button onclick="addProduct()">Adicionar Produto</button>
 </div>
 
+</div>
+
+<!-- CARRINHO VISUAL -->
+<div id="cartModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:999;">
+<div style="background:#fff; width:90%; max-width:400px; margin:50px auto; padding:20px; border-radius:15px;">
+<h2>Seu Carrinho</h2>
+<div id="cartItems"></div>
+<h3 id="cartTotal">Total: R$ 0</h3>
+<button onclick="sendWhats()">Finalizar</button>
+<button onclick="closeCart()">Fechar</button>
+</div>
 </div>
 
 <!-- Firebase -->
@@ -63,14 +71,14 @@ input, select { padding:8px; margin:5px 0; width:100%; }
 
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyBmbDy3WAMmIGrbDJHrQiC3-QX_ASzLUbI",
-  authDomain: "best-imports-b25a5.firebaseapp.com",
-  databaseURL: "https://best-imports-b25a5-default-rtdb.firebaseio.com",
-  projectId: "best-imports-b25a5",
-  storageBucket: "best-imports-b25a5.firebasestorage.app",
-  messagingSenderId: "1005080108441",
-  appId: "1:1005080108441:web:4d19fcf902add5b7a30708",
-  measurementId: "G-KMRB6NS837"
+apiKey: "AIzaSyBmbDy3WAMmIGrbDJHrQiC3-QX_ASzLUbI",
+authDomain: "best-imports-b25a5.firebaseapp.com",
+databaseURL: "https://best-imports-b25a5-default-rtdb.firebaseio.com",
+projectId: "best-imports-b25a5",
+storageBucket: "best-imports-b25a5.firebasestorage.app",
+messagingSenderId: "1005080108441",
+appId: "1:1005080108441:web:4d19fcf902add5b7a30708",
+measurementId: "G-KMRB6NS837"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -83,10 +91,7 @@ let logged = false;
 db.ref("products").on("value", snapshot => {
 products = [];
 snapshot.forEach(item => {
-products.push({
-id: item.key,
-...item.val()
-});
+products.push({ id: item.key, ...item.val() });
 });
 renderProducts();
 });
@@ -117,13 +122,8 @@ ${logged ? `
 
 function addToCart(index) {
 const item = cart.find(p => p.id === products[index].id);
-
-if (item) {
-item.qty += 1;
-} else {
-cart.push({...products[index], qty: 1});
-}
-
+if (item) item.qty += 1;
+else cart.push({...products[index], qty:1});
 updateCart();
 }
 
@@ -132,37 +132,47 @@ document.getElementById("cartCount").innerText = cart.reduce((a,b)=>a+b.qty,0);
 }
 
 function openCart() {
-let text = "🛒 Seu Carrinho:\n\n";
+const modal = document.getElementById("cartModal");
+const itemsDiv = document.getElementById("cartItems");
+
+modal.style.display = "block";
+itemsDiv.innerHTML = "";
+
+let total = 0;
 
 cart.forEach((p, i) => {
-text += `${i} - ${p.name}\nQtd: ${p.qty} | R$ ${p.price}\n\n`;
+total += p.price * p.qty;
+
+itemsDiv.innerHTML += `
+<div style="border-bottom:1px solid #ddd; padding:10px 0;">
+<b>${p.name}</b><br>
+R$ ${p.price} x ${p.qty}
+<br>
+<button onclick="changeQty(${i}, -1)">-</button>
+<button onclick="changeQty(${i}, 1)">+</button>
+<button onclick="removeItem(${i})">Remover</button>
+</div>
+`;
 });
 
-const total = cart.reduce((sum, p) => sum + (p.price * p.qty), 0);
-
-text += `Total: R$ ${total}`;
-
-let action = prompt(text + "\n\nDigite o número do item para alterar quantidade ou 'ok' para finalizar:");
-
-if (action === "ok") {
-sendWhats();
-return;
+document.getElementById("cartTotal").innerText = "Total: R$ " + total;
 }
 
-const index = parseInt(action);
-
-if (!isNaN(index) && cart[index]) {
-let newQty = prompt("Nova quantidade:", cart[index].qty);
-
-if (newQty > 0) {
-cart[index].qty = parseInt(newQty);
-} else {
-cart.splice(index, 1);
+function closeCart() {
+document.getElementById("cartModal").style.display = "none";
 }
 
+function changeQty(index, change) {
+cart[index].qty += change;
+if (cart[index].qty <= 0) cart.splice(index, 1);
 updateCart();
 openCart();
 }
+
+function removeItem(index) {
+cart.splice(index, 1);
+updateCart();
+openCart();
 }
 
 function addProduct() {
@@ -175,12 +185,7 @@ const category = document.getElementById("newCategory").value;
 
 const reader = new FileReader();
 reader.onload = function(e) {
-db.ref("products").push({
-name,
-price,
-category,
-image: e.target.result
-});
+db.ref("products").push({ name, price, category, image: e.target.result });
 };
 
 if (file) reader.readAsDataURL(file);
@@ -193,38 +198,19 @@ const p = products[index];
 
 const newName = prompt("Novo nome:", p.name);
 const newPrice = prompt("Novo preço:", p.price);
-const newCategory = prompt("Categoria (monjauro ou perfume):", p.category);
+const newCategory = prompt("Categoria:", p.category);
 
 if (newName) p.name = newName;
 if (newPrice) p.price = newPrice;
 if (newCategory) p.category = newCategory;
 
-if (confirm("Deseja trocar a imagem?")) {
-const input = document.createElement("input");
-input.type = "file";
-
-input.onchange = e => {
-const file = e.target.files[0];
-const reader = new FileReader();
-
-reader.onload = function(ev) {
-p.image = ev.target.result;
 db.ref("products/" + p.id).update(p);
-};
-
-reader.readAsDataURL(file);
-};
-
-input.click();
-} else {
-db.ref("products/" + p.id).update(p);
-}
 }
 
 function deleteProduct(index) {
 if (!logged) return alert("Faça login");
 
-if (confirm("Tem certeza que deseja excluir este produto?")) {
+if (confirm("Excluir produto?")) {
 db.ref("products/" + products[index].id).remove();
 }
 }
@@ -236,7 +222,6 @@ const pass = prompt("Senha:");
 if (user === "admin" && pass === "1234") {
 logged = true;
 document.getElementById("admin").style.display = "block";
-alert("Logado!");
 renderProducts();
 } else {
 alert("Senha incorreta");
