@@ -1,147 +1,9 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<title>Loja Pro</title>
-
-<style>
-body{margin:0;font-family:Arial;background:#f4f6f9}
-
-header{
-background:#111827;
-color:#fff;
-padding:15px;
-text-align:center;
-position:relative;
-}
-
-#gear{
-position:absolute;
-right:15px;
-top:15px;
-cursor:pointer;
-}
-
-.grid{display:grid;gap:10px;padding:10px}
-
-.card{
-background:#fff;
-border-radius:10px;
-overflow:hidden;
-box-shadow:0 2px 10px rgba(0,0,0,.1);
-}
-
-.card img{width:100%;height:180px;object-fit:cover}
-
-.card-body{padding:10px}
-
-button{
-width:100%;
-padding:10px;
-border:none;
-background:#2563eb;
-color:#fff;
-border-radius:8px;
-cursor:pointer;
-}
-
-.cat{
-display:flex;
-gap:10px;
-padding:10px;
-overflow-x:auto;
-}
-
-.cat button{
-background:#fff;
-color:#000;
-border-radius:20px;
-padding:8px 12px;
-}
-
-/* CART */
-#cartBtn{
-position:fixed;
-bottom:20px;
-right:20px;
-background:#111827;
-color:#fff;
-padding:15px;
-border-radius:50%;
-cursor:pointer;
-}
-
-/* ADMIN */
-#admin{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.6);
-display:none;
-align-items:center;
-justify-content:center;
-}
-
-.adminBox{
-background:#fff;
-padding:15px;
-width:90%;
-max-width:600px;
-border-radius:10px;
-}
-</style>
-</head>
-
-<body>
-
-<header>
-🛍️ Loja Pro
-<div id="gear" onclick="openAdmin()">⚙️</div>
-</header>
-
-<div class="cat">
-<button onclick="filter('all')">Todos</button>
-<button onclick="filter('Perfume')">Perfume</button>
-<button onclick="filter('Monjauro')">Monjauro</button>
-</div>
-
-<div class="grid" id="list"></div>
-
-<div id="cartBtn" onclick="checkout()">🛒 Finalizar</div>
-
-<!-- ADMIN -->
-<div id="admin">
-<div class="adminBox">
-
-<h3>Admin</h3>
-
-<input id="pass" type="password" placeholder="Senha">
-<button onclick="login()">Entrar</button>
-
-<div id="panel" style="display:none">
-
-<input id="name" placeholder="Nome">
-<input id="price" placeholder="Preço">
-
-<select id="cat">
-<option>Perfume</option>
-<option>Monjauro</option>
-</select>
-
-<button onclick="addProduct()">Adicionar</button>
-
-</div>
-
-<button onclick="closeAdmin()">Fechar</button>
-
-</div>
-</div>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot } 
 from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
-/* FIREBASE */
+/* FIREBASE CONFIG */
 const firebaseConfig = {
   apiKey: "SUA_KEY",
   authDomain: "SEU.firebaseapp.com",
@@ -151,123 +13,56 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* PRODUTOS FIXOS + FIREBASE */
+/* PRODUTOS */
 let products = [];
-let cart = [];
-let filterCat = "all";
 
-/* PRODUTOS INICIAIS (SE BANCO VAZIO) */
-const defaultProducts = [
-{ name:"TG 15mg", price:0, category:"Monjauro", img:"https://via.placeholder.com/400" },
-{ name:"Tirzec 15mg ampola única", price:0, category:"Monjauro", img:"https://via.placeholder.com/400" },
-{ name:"Tirzec 15mg 4 ampolas", price:0, category:"Monjauro", img:"https://via.placeholder.com/400" },
-{ name:"Lipoless MD", price:0, category:"Monjauro", img:"https://via.placeholder.com/400" },
-{ name:"Veltrane 90mg", price:0, category:"Monjauro", img:"https://via.placeholder.com/400" },
-
-{ name:"Sabah", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
-{ name:"Wazeer", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
-{ name:"Ameer", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
-{ name:"Leonie", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
-{ name:"Odyssey Mandarin", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
-{ name:"Asad Preto", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
-{ name:"Yara Candy", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
-{ name:"Asad Elixir", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
-{ name:"Hawas Black", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
-{ name:"Yara Elixir", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
-{ name:"Yara Tous", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
-{ name:"Yara Moi", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
-{ name:"Eclaire Banoffi", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
-{ name:"Silver Agent", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
-{ name:"Silver Agent Intense", price:0, category:"Perfume", img:"https://via.placeholder.com/400" }
-];
-
-/* FIREBASE LOAD */
-onSnapshot(collection(db,"products"), snap=>{
+/* CARREGAR PRODUTOS */
+onSnapshot(collection(db,"products"), (snap)=>{
 products = [];
-
-snap.forEach(d=>{
-products.push({id:d.id,...d.data()});
+snap.forEach(doc=>{
+products.push({id:doc.id,...doc.data()});
 });
 
-if(products.length===0){
-products = defaultProducts;
-}
-
+console.log("PRODUTOS CARREGADOS:", products);
 render();
 });
 
-/* FILTER */
-window.filter = function(f){
-filterCat = f;
-render();
-}
+/* RENDER SIMPLES */
+window.render = function(){
+let list = document.getElementById("list");
+if(!list) return;
 
-/* RENDER */
-function render(){
-let list=document.getElementById("list");
-list.innerHTML="";
+list.innerHTML = "";
 
 products.forEach(p=>{
-if(filterCat!="all" && p.category!=filterCat) return;
-
 list.innerHTML += `
-<div class="card">
-<img src="${p.img}">
-<div class="card-body">
+<div>
 <h3>${p.name}</h3>
 <p>R$ ${p.price}</p>
-<button onclick="add('${p.name}',${p.price})">Comprar</button>
 </div>
-</div>`;
+`;
 });
 }
 
-/* CART */
-window.add = function(name,price){
-
-let f = cart.find(x=>x.name===name);
-
-if(f) f.qty++;
-else cart.push({name,price,qty:1});
-}
-
-/* WHATSAPP */
-window.checkout = function(){
-
-let msg = "🛒 Pedido:\n";
-let total = 0;
-
-cart.forEach(p=>{
-let t = p.price * p.qty;
-total += t;
-msg += `- ${p.name} x${p.qty} = R$ ${t}\n`;
-});
-
-msg += `\nTOTAL: R$ ${total}`;
-
-window.open("https://wa.me/5585982241638?text="+encodeURIComponent(msg));
-}
-
-/* ADMIN */
-window.openAdmin = ()=>admin.style.display="flex";
-window.closeAdmin = ()=>admin.style.display="none";
-
-window.login = function(){
-if(pass.value=="1234"){
-panel.style.display="block";
-}
-}
-
+/* ADD PRODUTO FUNCIONANDO */
 window.addProduct = async function(){
+
+try {
+
 await addDoc(collection(db,"products"),{
-name:name.value,
-price:Number(price.value),
-category:cat.value,
-img:"https://via.placeholder.com/400"
+name: document.getElementById("name").value,
+price: Number(document.getElementById("price").value),
+category: document.getElementById("cat").value,
+img: "https://via.placeholder.com/400"
 });
+
+alert("Produto adicionado!");
+
+} catch(e){
+console.error(e);
+alert("Erro ao adicionar produto");
+}
+
 }
 
 </script>
-
-</body>
-</html>
