@@ -41,9 +41,10 @@ background:#2563eb;
 color:#fff;
 border-radius:8px;
 cursor:pointer;
+margin-top:5px;
 }
 
-#cart{
+#cartBtn{
 position:fixed;
 bottom:20px;
 right:20px;
@@ -52,6 +53,29 @@ color:#fff;
 padding:15px;
 border-radius:50%;
 cursor:pointer;
+}
+
+#modal{
+position:fixed;
+bottom:-100%;
+left:0;
+width:100%;
+height:60%;
+background:#fff;
+border-top-left-radius:20px;
+border-top-right-radius:20px;
+transition:0.3s;
+padding:10px;
+overflow:auto;
+}
+
+#modal.active{bottom:0}
+
+.item{
+display:flex;
+justify-content:space-between;
+padding:10px;
+border-bottom:1px solid #eee;
 }
 </style>
 </head>
@@ -62,7 +86,14 @@ cursor:pointer;
 
 <div class="grid" id="list"></div>
 
-<div id="cart" onclick="showCart()">🛒</div>
+<div id="cartBtn" onclick="openCart()">🛒</div>
+
+<div id="modal">
+<h3>Carrinho</h3>
+<div id="cart"></div>
+<button onclick="checkout()">Finalizar no WhatsApp</button>
+<button onclick="closeCart()">Fechar</button>
+</div>
 
 <script>
 
@@ -74,7 +105,7 @@ let products = [
 
 let cart = [];
 
-/* RENDER */
+/* RENDER PRODUTOS */
 function render(){
 let list = document.getElementById("list");
 list.innerHTML = "";
@@ -85,7 +116,7 @@ list.innerHTML += `
 <div class="card-body">
 <h3>${p.name}</h3>
 <p>R$ ${p.price}</p>
-<button onclick="add(${i})">Comprar</button>
+<button onclick="add(${i})">Adicionar</button>
 </div>
 </div>`;
 });
@@ -93,16 +124,77 @@ list.innerHTML += `
 
 render();
 
-/* ADD CART */
+/* ADD CARRINHO */
 function add(i){
-cart.push(products[i]);
-alert("Adicionado ao carrinho");
+
+let item = products[i];
+
+let found = cart.find(p=>p.name===item.name);
+
+if(found){
+found.qty++;
+}else{
+cart.push({...item, qty:1});
+}
+
+renderCart();
+}
+
+/* RENDER CARRINHO */
+function renderCart(){
+let c = document.getElementById("cart");
+c.innerHTML = "";
+
+let total = 0;
+
+cart.forEach((p,i)=>{
+let subtotal = p.price * p.qty;
+total += subtotal;
+
+c.innerHTML += `
+<div class="item">
+<div>
+<b>${p.name}</b><br>
+R$ ${p.price}
+</div>
+
+<div>
+<button onclick="changeQty(${i},1)">+</button>
+${p.qty}
+<button onclick="changeQty(${i},-1)">-</button>
+</div>
+</div>`;
+});
+
+c.innerHTML += `<h3>Total: R$ ${total}</h3>`;
+}
+
+/* MUDAR QTD */
+function changeQty(i,val){
+
+cart[i].qty += val;
+
+if(cart[i].qty <= 0){
+cart.splice(i,1);
+}
+
+renderCart();
 }
 
 /* CART */
-function showCart(){
+function openCart(){
+document.getElementById("modal").classList.add("active");
+renderCart();
+}
 
-if(cart.length === 0){
+function closeCart(){
+document.getElementById("modal").classList.remove("active");
+}
+
+/* WHATSAPP */
+function checkout(){
+
+if(cart.length===0){
 alert("Carrinho vazio");
 return;
 }
@@ -111,11 +203,12 @@ let msg = "🛒 Pedido:\n";
 let total = 0;
 
 cart.forEach(p=>{
-msg += `- ${p.name} R$ ${p.price}\n`;
-total += p.price;
+let t = p.price * p.qty;
+total += t;
+msg += `- ${p.name} x${p.qty} = R$ ${t}\n`;
 });
 
-msg += "\nTOTAL: R$ " + total;
+msg += `\nTOTAL: R$ ${total}`;
 
 window.open("https://wa.me/5585982241638?text="+encodeURIComponent(msg));
 }
