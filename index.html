@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Loja Pro Firebase</title>
+<title>Loja Pro Shopee</title>
 
 <style>
 body{margin:0;font-family:Arial;background:#f4f6f9}
@@ -87,13 +87,21 @@ width:90%;
 max-width:600px;
 border-radius:10px;
 }
+
+/* DASHBOARD */
+#dashboard{
+padding:10px;
+background:#fff;
+margin:10px;
+border-radius:10px;
+}
 </style>
 </head>
 
 <body>
 
 <header>
-🛍️ Loja Pro Firebase
+🛍️ Loja Pro Shopee
 <div id="gear" onclick="openAdmin()">⚙️</div>
 </header>
 
@@ -105,7 +113,14 @@ border-radius:10px;
 
 <div class="grid" id="list"></div>
 
-<div id="cartBtn" onclick="sendWhatsApp()">🛒</div>
+<div id="cartBtn" onclick="checkout()">🛒 Finalizar</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+<h3>📊 Dashboard</h3>
+<p>Total vendas: R$ <span id="totalSales">0</span></p>
+<div id="orders"></div>
+</div>
 
 <!-- ADMIN -->
 <div id="admin">
@@ -118,8 +133,6 @@ border-radius:10px;
 
 <div id="panel" style="display:none">
 
-<h4>Novo Produto</h4>
-
 <input id="name" placeholder="Nome">
 <input id="price" placeholder="Preço">
 <input id="img" placeholder="Imagem URL">
@@ -131,11 +144,6 @@ border-radius:10px;
 
 <button onclick="addProduct()">Adicionar</button>
 
-<hr>
-
-<h4>Produtos</h4>
-<div id="adminList"></div>
-
 </div>
 
 <button onclick="closeAdmin()">Fechar</button>
@@ -145,14 +153,14 @@ border-radius:10px;
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } 
+import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc } 
 from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
 /* FIREBASE */
 const firebaseConfig = {
-  apiKey: "AIzaSyBmbDy3WAMmIGrbDJHrQiC3-QX_ASzLUbI",
-  authDomain: "best-imports-b25a5.firebaseapp.com",
-  projectId: "best-imports-b25a5"
+  apiKey: "SUA_KEY",
+  authDomain: "SEU.firebaseapp.com",
+  projectId: "SEU_PROJECT"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -161,15 +169,29 @@ const db = getFirestore(app);
 /* DADOS */
 let products = [];
 let cart = [];
+let orders = [];
 let filterCat = "all";
-const WHATSAPP = "5585982241638";
 
-/* PRODUTOS LIVE */
+/* PRODUTOS */
 onSnapshot(collection(db,"products"), snap=>{
 products = [];
 snap.forEach(d=>products.push({id:d.id,...d.data()}));
 render();
-renderAdmin();
+});
+
+/* ORDERS */
+onSnapshot(collection(db,"orders"), snap=>{
+orders = [];
+let total = 0;
+
+snap.forEach(d=>{
+let o = d.data();
+orders.push({...o,id:d.id});
+total += o.total;
+});
+
+document.getElementById("totalSales").innerText = total;
+renderOrders();
 });
 
 /* FILTER */
@@ -178,7 +200,7 @@ filterCat=f;
 render();
 }
 
-/* RENDER LOJA */
+/* RENDER */
 function render(){
 let list=document.getElementById("list");
 list.innerHTML="";
@@ -186,7 +208,7 @@ list.innerHTML="";
 products.forEach(p=>{
 if(filterCat!="all" && p.category!=filterCat) return;
 
-list.innerHTML += `
+list.innerHTML+=`
 <div class="card">
 <img src="${p.img}">
 <div class="card-body">
@@ -198,29 +220,29 @@ list.innerHTML += `
 });
 }
 
-/* CARRINHO */
+/* CART */
 window.add = function(id){
 let p = products.find(x=>x.id===id);
-
 let f = cart.find(x=>x.id===id);
+
 if(f) f.qty++;
 else cart.push({...p,qty:1});
 }
 
-/* WHATSAPP */
-window.sendWhatsApp = function(){
-let msg="🛒 Pedido:%0A";
-let total=0;
+/* CHECKOUT REAL */
+window.checkout = async function(){
 
-cart.forEach(p=>{
-let t=p.price*p.qty;
-total+=t;
-msg+=`- ${p.name} x${p.qty} = R$ ${t}%0A`;
+let total = cart.reduce((a,b)=>a+(b.price*b.qty),0);
+
+await addDoc(collection(db,"orders"),{
+items:cart,
+total:total,
+status:"pendente",
+createdAt:Date.now()
 });
 
-msg+=`%0A💰 TOTAL: R$ ${total}`;
-
-window.open("https://wa.me/"+WHATSAPP+"?text="+encodeURIComponent(msg));
+alert("Pedido enviado!");
+cart = [];
 }
 
 /* ADMIN */
@@ -243,26 +265,25 @@ category:cat.value
 });
 }
 
-/* ADMIN LIST */
-function renderAdmin(){
-let box=document.getElementById("adminList");
+/* DASHBOARD */
+function renderOrders(){
+let box=document.getElementById("orders");
 box.innerHTML="";
 
-products.forEach(p=>{
-box.innerHTML += `
-<div style="padding:10px;border:1px solid #ddd;margin:5px">
+orders.forEach(o=>{
+box.innerHTML+=`
+<div style="border:1px solid #ddd;padding:10px;margin:5px">
+<b>Total: R$ ${o.total}</b><br>
+Status: ${o.status}
 
-<b>${p.name}</b> - R$ ${p.price}
-
-<button onclick="del('${p.id}')">Excluir</button>
-
+<button onclick="setStatus('${o.id}','enviado')">Enviar</button>
 </div>`;
 });
 }
 
-/* DELETE */
-window.del = async function(id){
-await deleteDoc(doc(db,"products",id));
+/* STATUS */
+window.setStatus = async function(id,status){
+await updateDoc(doc(db,"orders",id),{status});
 }
 
 </script>
