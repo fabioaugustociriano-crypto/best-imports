@@ -2,245 +2,144 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Loja Restaurada</title>
-
+<title>Best Imports</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body{margin:0;font-family:Arial;background:#f4f6f9}
-
-header{
-background:#111827;
-color:#fff;
-padding:15px;
-text-align:center;
-font-weight:bold;
-position:relative;
-}
-
-#cartBtn{
-position:absolute;
-right:15px;
-top:15px;
-cursor:pointer;
-}
-
-.grid{display:grid;gap:10px;padding:10px}
-
-.card{
-background:#fff;
-padding:10px;
-border-radius:10px;
-box-shadow:0 2px 10px rgba(0,0,0,.1);
-}
-
-button{
-width:100%;
-padding:10px;
-border:none;
-background:#2563eb;
-color:#fff;
-border-radius:8px;
-cursor:pointer;
-margin-top:5px;
-}
-
-/* CART */
-#cartModal{
-position:fixed;
-bottom:-100%;
-left:0;
-width:100%;
-height:60%;
-background:#fff;
-border-top-left-radius:20px;
-border-top-right-radius:20px;
-transition:0.3s;
-padding:10px;
-overflow:auto;
-}
-
-#cartModal.active{bottom:0}
-
-.item{
-display:flex;
-justify-content:space-between;
-padding:10px;
-border-bottom:1px solid #eee;
-}
-
-/* ADMIN */
-#admin{
-background:#fff;
-margin:10px;
-padding:10px;
-border-radius:10px;
-}
+body { margin:0; font-family:Arial; background:#f5f5f5; }
+header { background:#000; color:#fff; padding:15px; text-align:center; }
+.container { padding:20px; }
+.products { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; }
+.card { background:#fff; padding:10px; border-radius:10px; text-align:center; }
+.card img { width:100%; border-radius:10px; }
+button { background:#000; color:#fff; border:none; padding:10px; margin-top:10px; cursor:pointer; border-radius:5px; }
+#cart { position:fixed; right:10px; top:10px; background:#fff; padding:10px; border-radius:10px; }
+#admin { display:none; background:#fff; padding:15px; margin-top:20px; border-radius:10px; }
+input, select { padding:8px; margin:5px 0; width:100%; }
 </style>
 </head>
-
 <body>
 
 <header>
-🛍️ Loja Restaurada
-<div id="cartBtn" onclick="openCart()">🛒</div>
+<h1>Best Imports</h1>
+<button onclick="login()">Admin</button>
+<button onclick="logout()">Sair</button>
 </header>
 
-<div class="grid" id="list"></div>
-
-<!-- CART -->
-<div id="cartModal">
-<h3>Carrinho</h3>
-<div id="cart"></div>
-<button onclick="checkout()">Finalizar WhatsApp</button>
-<button onclick="closeCart()">Fechar</button>
+<div id="cart">
+🛒 <span id="cartCount">0</span>
+<button onclick="sendWhats()">Finalizar</button>
 </div>
 
-<!-- ADMIN -->
+<div class="container">
+
+<select id="categoryFilter" onchange="renderProducts()">
+  <option value="all">Todos</option>
+  <option value="monjauro">Monjauro</option>
+  <option value="perfume">Perfume</option>
+</select>
+
+<div class="products" id="productList"></div>
+
 <div id="admin">
-<h3>Admin - Adicionar Produto</h3>
+<h2>Painel Admin</h2>
 
-<input id="name" placeholder="Nome"><br><br>
-<input id="price" placeholder="Preço"><br><br>
+<input type="text" id="newName" placeholder="Nome do produto">
+<input type="number" id="newPrice" placeholder="Preço">
+<input type="file" id="newImage">
 
-<button onclick="addProduct()">Adicionar</button>
+<select id="newCategory">
+  <option value="monjauro">Monjauro</option>
+  <option value="perfume">Perfume</option>
+</select>
+
+<button onclick="addProduct()">Adicionar Produto</button>
 </div>
 
-<script type="module">
+</div>
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot } 
-from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
-
-/* CONFIG */
-const firebaseConfig = {
-  apiKey: "SUA_KEY",
-  authDomain: "SEU_PROJETO.firebaseapp.com",
-  projectId: "SEU_PROJETO"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-/* VARIÁVEIS */
-let products = [];
+<script>
+let products = JSON.parse(localStorage.getItem("products")) || [];
 let cart = [];
+let logged = false;
 
-/* PRODUTOS */
-onSnapshot(collection(db,"products"), snap=>{
-products = [];
-snap.forEach(d=>{
-products.push({id:d.id,...d.data()});
-});
-render();
-});
+function renderProducts() {
+const list = document.getElementById("productList");
+const filter = document.getElementById("categoryFilter").value;
 
-/* RENDER */
-function render(){
-let list = document.getElementById("list");
 list.innerHTML = "";
 
-products.forEach((p,i)=>{
+products
+.filter(p => filter === "all" || p.category === filter)
+.forEach((p, index) => {
 list.innerHTML += `
 <div class="card">
+<img src="${p.image}">
 <h3>${p.name}</h3>
 <p>R$ ${p.price}</p>
-<button onclick="addCart(${i})">Comprar</button>
-</div>`;
-});
-}
-
-/* CARRINHO */
-window.addCart = function(i){
-
-let item = products[i];
-let found = cart.find(p=>p.id===item.id);
-
-if(found){
-found.qty++;
-}else{
-cart.push({...item, qty:1});
-}
-
-renderCart();
-}
-
-function renderCart(){
-let c = document.getElementById("cart");
-c.innerHTML = "";
-
-let total = 0;
-
-cart.forEach((p,i)=>{
-let sub = p.price * p.qty;
-total += sub;
-
-c.innerHTML += `
-<div class="item">
-<div>
-<b>${p.name}</b><br>
-R$ ${p.price}
+<button onclick="addToCart(${index})">Comprar</button>
 </div>
+`;
+});
+}
 
-<div>
-<button onclick="changeQty(${i},1)">+</button>
-${p.qty}
-<button onclick="changeQty(${i},-1)">-</button>
-</div>
-</div>`;
+function addToCart(index) {
+cart.push(products[index]);
+document.getElementById("cartCount").innerText = cart.length;
+}
+
+function addProduct() {
+if (!logged) return alert("Faça login");
+
+const name = document.getElementById("newName").value;
+const price = document.getElementById("newPrice").value;
+const file = document.getElementById("newImage").files[0];
+const category = document.getElementById("newCategory").value;
+
+const reader = new FileReader();
+reader.onload = function(e) {
+products.push({
+name,
+price,
+category,
+image: e.target.result
 });
 
-c.innerHTML += `<h3>Total: R$ ${total}</h3>`;
+localStorage.setItem("products", JSON.stringify(products));
+renderProducts();
+};
+
+if (file) reader.readAsDataURL(file);
 }
 
-window.changeQty = function(i,val){
-cart[i].qty += val;
-if(cart[i].qty <= 0) cart.splice(i,1);
-renderCart();
+function login() {
+const user = prompt("Usuário:");
+const pass = prompt("Senha:");
+
+if (user === "admin" && pass === "1234") {
+logged = true;
+document.getElementById("admin").style.display = "block";
+alert("Logado!");
+} else {
+alert("Senha incorreta");
+}
 }
 
-/* MODAL CART */
-window.openCart = function(){
-document.getElementById("cartModal").classList.add("active");
-renderCart();
+function logout() {
+logged = false;
+document.getElementById("admin").style.display = "none";
 }
 
-window.closeCart = function(){
-document.getElementById("cartModal").classList.remove("active");
-}
+function sendWhats() {
+let msg = "Pedido:%0A";
 
-/* WHATSAPP */
-window.checkout = function(){
-
-if(cart.length===0){
-alert("Carrinho vazio");
-return;
-}
-
-let msg = "🛒 Pedido:\n";
-let total = 0;
-
-cart.forEach(p=>{
-let t = p.price * p.qty;
-total += t;
-msg += `- ${p.name} x${p.qty} = R$ ${t}\n`;
+cart.forEach(p => {
+msg += `- ${p.name} R$${p.price}%0A`;
 });
 
-msg += `\nTOTAL: R$ ${total}`;
-
-window.open("https://wa.me/5585982241638?text="+encodeURIComponent(msg));
+window.open(`https://wa.me/5585982241638?text=${msg}`);
 }
 
-/* ADMIN */
-window.addProduct = async function(){
-
-await addDoc(collection(db,"products"),{
-name:name.value,
-price:Number(price.value)
-});
-
-name.value="";
-price.value="";
-}
-
+renderProducts();
 </script>
 
 </body>
