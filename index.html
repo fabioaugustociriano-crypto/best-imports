@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Loja Pro Firebase</title>
+<title>Loja Pro</title>
 
 <style>
 body{margin:0;font-family:Arial;background:#f4f6f9}
@@ -32,7 +32,6 @@ box-shadow:0 2px 10px rgba(0,0,0,.1);
 }
 
 .card img{width:100%;height:180px;object-fit:cover}
-
 .card-body{padding:10px}
 
 button{
@@ -94,7 +93,7 @@ border-radius:10px;
 <body>
 
 <header>
-🛍️ Loja Pro Firebase
+🛍️ Loja Pro
 <div id="gear" onclick="openAdmin()">⚙️</div>
 </header>
 
@@ -118,8 +117,6 @@ border-radius:10px;
 <button onclick="login()">Entrar</button>
 
 <div id="panel" style="display:none">
-
-<h4>Novo Produto</h4>
 
 <input id="name" placeholder="Nome">
 <input id="price" placeholder="Preço">
@@ -160,12 +157,12 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-/* DADOS */
+/* VARS */
 let products = [];
 let cart = [];
 let filterCat = "all";
 
-/* PRODUTOS REALTIME */
+/* LOAD PRODUCTS */
 onSnapshot(collection(db,"products"), snap=>{
 products = [];
 snap.forEach(d=>products.push({id:d.id,...d.data()}));
@@ -201,15 +198,39 @@ list.innerHTML += `
 /* CART */
 window.addCart = function(id){
 let p = products.find(x=>x.id===id);
-let f = cart.find(x=>x.id===id);
 
+let f = cart.find(x=>x.id===id);
 if(f) f.qty++;
 else cart.push({...p,qty:1});
 }
 
-/* CHECKOUT */
+/* WHATSAPP CHECKOUT (CORRIGIDO) */
 window.checkout = function(){
-alert("Pedido enviado (implementar orders depois)");
+
+if(cart.length === 0){
+alert("Carrinho vazio");
+return;
+}
+
+let msg = "🛒 *Novo Pedido*\n\n";
+let total = 0;
+
+cart.forEach(p=>{
+let subtotal = p.price * p.qty;
+total += subtotal;
+
+msg += `- ${p.name} x${p.qty} = R$ ${subtotal}\n`;
+});
+
+msg += `\n💰 *TOTAL: R$ ${total}*`;
+
+let phone = "5585982241638";
+
+window.open(
+  "https://wa.me/" + phone + "?text=" + encodeURIComponent(msg),
+  "_blank"
+);
+
 cart = [];
 }
 
@@ -223,11 +244,10 @@ panel.style.display="block";
 }
 }
 
-/* UPLOAD + ADD PRODUCT */
+/* ADD PRODUCT + UPLOAD */
 window.addProduct = async function(){
 
 let file = document.getElementById("fileInput").files[0];
-
 let url = "";
 
 if(file){
