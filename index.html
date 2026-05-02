@@ -32,6 +32,7 @@ box-shadow:0 2px 10px rgba(0,0,0,.1);
 }
 
 .card img{width:100%;height:180px;object-fit:cover}
+
 .card-body{padding:10px}
 
 button{
@@ -121,8 +122,6 @@ border-radius:10px;
 <input id="name" placeholder="Nome">
 <input id="price" placeholder="Preço">
 
-<input type="file" id="fileInput" accept="image/*,application/pdf">
-
 <select id="cat">
 <option>Perfume</option>
 <option>Monjauro</option>
@@ -142,30 +141,58 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/fireba
 import { getFirestore, collection, addDoc, onSnapshot } 
 from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
-import { getStorage, ref, uploadBytes, getDownloadURL } 
-from "https://www.gstatic.com/firebasejs/12.12.1/firebase-storage.js";
-
 /* FIREBASE */
 const firebaseConfig = {
   apiKey: "SUA_KEY",
   authDomain: "SEU.firebaseapp.com",
-  projectId: "SEU_PROJECT",
-  storageBucket: "SEU_PROJECT.appspot.com"
+  projectId: "SEU_PROJECT"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const storage = getStorage(app);
 
-/* VARS */
+/* PRODUTOS FIXOS + FIREBASE */
 let products = [];
 let cart = [];
 let filterCat = "all";
 
-/* LOAD PRODUCTS */
+/* PRODUTOS INICIAIS (SE BANCO VAZIO) */
+const defaultProducts = [
+{ name:"TG 15mg", price:0, category:"Monjauro", img:"https://via.placeholder.com/400" },
+{ name:"Tirzec 15mg ampola única", price:0, category:"Monjauro", img:"https://via.placeholder.com/400" },
+{ name:"Tirzec 15mg 4 ampolas", price:0, category:"Monjauro", img:"https://via.placeholder.com/400" },
+{ name:"Lipoless MD", price:0, category:"Monjauro", img:"https://via.placeholder.com/400" },
+{ name:"Veltrane 90mg", price:0, category:"Monjauro", img:"https://via.placeholder.com/400" },
+
+{ name:"Sabah", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
+{ name:"Wazeer", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
+{ name:"Ameer", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
+{ name:"Leonie", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
+{ name:"Odyssey Mandarin", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
+{ name:"Asad Preto", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
+{ name:"Yara Candy", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
+{ name:"Asad Elixir", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
+{ name:"Hawas Black", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
+{ name:"Yara Elixir", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
+{ name:"Yara Tous", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
+{ name:"Yara Moi", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
+{ name:"Eclaire Banoffi", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
+{ name:"Silver Agent", price:0, category:"Perfume", img:"https://via.placeholder.com/400" },
+{ name:"Silver Agent Intense", price:0, category:"Perfume", img:"https://via.placeholder.com/400" }
+];
+
+/* FIREBASE LOAD */
 onSnapshot(collection(db,"products"), snap=>{
 products = [];
-snap.forEach(d=>products.push({id:d.id,...d.data()}));
+
+snap.forEach(d=>{
+products.push({id:d.id,...d.data()});
+});
+
+if(products.length===0){
+products = defaultProducts;
+}
+
 render();
 });
 
@@ -177,8 +204,8 @@ render();
 
 /* RENDER */
 function render(){
-let list = document.getElementById("list");
-list.innerHTML = "";
+let list=document.getElementById("list");
+list.innerHTML="";
 
 products.forEach(p=>{
 if(filterCat!="all" && p.category!=filterCat) return;
@@ -189,49 +216,36 @@ list.innerHTML += `
 <div class="card-body">
 <h3>${p.name}</h3>
 <p>R$ ${p.price}</p>
-<button onclick="addCart('${p.id}')">Comprar</button>
+<button onclick="add('${p.name}',${p.price})">Comprar</button>
 </div>
 </div>`;
 });
 }
 
 /* CART */
-window.addCart = function(id){
-let p = products.find(x=>x.id===id);
+window.add = function(name,price){
 
-let f = cart.find(x=>x.id===id);
+let f = cart.find(x=>x.name===name);
+
 if(f) f.qty++;
-else cart.push({...p,qty:1});
+else cart.push({name,price,qty:1});
 }
 
-/* WHATSAPP CHECKOUT (CORRIGIDO) */
+/* WHATSAPP */
 window.checkout = function(){
 
-if(cart.length === 0){
-alert("Carrinho vazio");
-return;
-}
-
-let msg = "🛒 *Novo Pedido*\n\n";
+let msg = "🛒 Pedido:\n";
 let total = 0;
 
 cart.forEach(p=>{
-let subtotal = p.price * p.qty;
-total += subtotal;
-
-msg += `- ${p.name} x${p.qty} = R$ ${subtotal}\n`;
+let t = p.price * p.qty;
+total += t;
+msg += `- ${p.name} x${p.qty} = R$ ${t}\n`;
 });
 
-msg += `\n💰 *TOTAL: R$ ${total}*`;
+msg += `\nTOTAL: R$ ${total}`;
 
-let phone = "5585982241638";
-
-window.open(
-  "https://wa.me/" + phone + "?text=" + encodeURIComponent(msg),
-  "_blank"
-);
-
-cart = [];
+window.open("https://wa.me/5585982241638?text="+encodeURIComponent(msg));
 }
 
 /* ADMIN */
@@ -244,26 +258,13 @@ panel.style.display="block";
 }
 }
 
-/* ADD PRODUCT + UPLOAD */
 window.addProduct = async function(){
-
-let file = document.getElementById("fileInput").files[0];
-let url = "";
-
-if(file){
-const storageRef = ref(storage, "produtos/"+file.name);
-await uploadBytes(storageRef,file);
-url = await getDownloadURL(storageRef);
-}
-
 await addDoc(collection(db,"products"),{
 name:name.value,
 price:Number(price.value),
-img:url || "https://via.placeholder.com/400",
-category:cat.value
+category:cat.value,
+img:"https://via.placeholder.com/400"
 });
-
-alert("Produto adicionado!");
 }
 
 </script>
