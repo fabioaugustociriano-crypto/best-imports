@@ -1,84 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Loja Pro Firebase</title>
+
+<style>
+body{margin:0;font-family:Arial;background:#f4f6f9}
+
+header{
+background:#111827;
+color:#fff;
+padding:15px;
+text-align:center;
+position:relative;
+}
+
+#gear{
+position:absolute;
+right:15px;
+top:15px;
+cursor:pointer;
+}
+
+.grid{display:grid;gap:10px;padding:10px}
+
+.card{
+background:#fff;
+border-radius:10px;
+overflow:hidden;
+box-shadow:0 2px 10px rgba(0,0,0,.1);
+}
+
+.card img{width:100%;height:180px;object-fit:cover}
+.card-body{padding:10px}
+
+button{
+width:100%;
+padding:10px;
+border:none;
+background:#2563eb;
+color:#fff;
+border-radius:8px;
+cursor:pointer;
+}
+
+.cat{
+display:flex;
+gap:10px;
+padding:10px;
+overflow-x:auto;
+}
+
+.cat button{
+background:#fff;
+color:#000;
+border-radius:20px;
+padding:8px 12px;
+}
+
+/* CART */
+#cartBtn{
+position:fixed;
+bottom:20px;
+right:20px;
+background:#111827;
+color:#fff;
+padding:15px;
+border-radius:50%;
+cursor:pointer;
+}
+
+/* ADMIN */
+#admin{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.6);
+display:none;
+align-items:center;
+justify-content:center;
+}
+
+.adminBox{
+background:#fff;
+padding:15px;
+width:90%;
+max-width:600px;
+border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+🛍️ Loja Pro Firebase
+<div id="gear" onclick="openAdmin()">⚙️</div>
+</header>
+
+<div class="cat">
+<button onclick="filter('all')">Todos</button>
+<button onclick="filter('Perfume')">Perfume</button>
+<button onclick="filter('Monjauro')">Monjauro</button>
+</div>
+
+<div class="grid" id="list"></div>
+
+<div id="cartBtn" onclick="sendWhatsApp()">🛒</div>
+
+<!-- ADMIN -->
+<div id="admin">
+<div class="adminBox">
+
+<h3>Admin</h3>
+
+<input id="pass" type="password" placeholder="Senha">
+<button onclick="login()">Entrar</button>
+
+<div id="panel" style="display:none">
+
+<h4>Novo Produto</h4>
+
+<input id="name" placeholder="Nome">
+<input id="price" placeholder="Preço">
+<input id="img" placeholder="Imagem URL">
+
+<select id="cat">
+<option>Perfume</option>
+<option>Monjauro</option>
+</select>
+
+<button onclick="addProduct()">Adicionar</button>
+
+<hr>
+
+<h4>Produtos</h4>
+<div id="adminList"></div>
+
+</div>
+
+<button onclick="closeAdmin()">Fechar</button>
+
+</div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc } 
+import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } 
 from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
-import { getAuth, signInWithEmailAndPassword } 
-from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
-
-import { getStorage, ref, uploadBytes, getDownloadURL } 
-from "https://www.gstatic.com/firebasejs/12.12.1/firebase-storage.js";
-
-/* 🔥 FIREBASE CONFIG */
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyBmbDy3WAMmIGrbDJHrQiC3-QX_ASzLUbI",
   authDomain: "best-imports-b25a5.firebaseapp.com",
-  databaseURL: "https://best-imports-b25a5-default-rtdb.firebaseio.com",
-  projectId: "best-imports-b25a5",
-  storageBucket: "best-imports-b25a5.appspot.com",
-  messagingSenderId: "1005080108441",
-  appId: "1:1005080108441:web:4d19fcf902add5b7a30708"
+  projectId: "best-imports-b25a5"
 };
 
-/* INIT */
 const app = initializeApp(firebaseConfig);
-
-/* SERVICES */
 const db = getFirestore(app);
-const auth = getAuth(app);
-const storage = getStorage(app);
 
-/* EXPOR GLOBAL (para seu site antigo funcionar sem mudar tudo) */
-window.db = db;
-window.auth = auth;
-window.storage = storage;
+/* DADOS */
+let products = [];
+let cart = [];
+let filterCat = "all";
+const WHATSAPP = "5585982241638";
 
-window.firestore = {
-  collection,
-  addDoc,
-  onSnapshot,
-  updateDoc,
-  deleteDoc,
-  doc
-};
-
-window.storageRef = ref;
-window.uploadBytes = uploadBytes;
-window.getDownloadURL = getDownloadURL;
-
-/* =========================
-   🔥 BASE SHOPEE READY
-========================= */
-
-/* PRODUTOS */
-window.products = [];
-firestore.onSnapshot(firestore.collection(db,"products"), snap=>{
-  products = [];
-  snap.forEach(d=>products.push({id:d.id,...d.data()}));
-  console.log("PRODUTOS:", products);
+/* PRODUTOS LIVE */
+onSnapshot(collection(db,"products"), snap=>{
+products = [];
+snap.forEach(d=>products.push({id:d.id,...d.data()}));
+render();
+renderAdmin();
 });
 
-/* PEDIDOS (DASHBOARD) */
-window.orders = [];
-firestore.onSnapshot(firestore.collection(db,"orders"), snap=>{
-  orders = [];
-  snap.forEach(d=>orders.push({id:d.id,...d.data()}));
-  console.log("ORDERS:", orders);
+/* FILTER */
+window.filter = function(f){
+filterCat=f;
+render();
+}
+
+/* RENDER LOJA */
+function render(){
+let list=document.getElementById("list");
+list.innerHTML="";
+
+products.forEach(p=>{
+if(filterCat!="all" && p.category!=filterCat) return;
+
+list.innerHTML += `
+<div class="card">
+<img src="${p.img}">
+<div class="card-body">
+<h3>${p.name}</h3>
+<p>R$ ${p.price}</p>
+<button onclick="add('${p.id}')">Comprar</button>
+</div>
+</div>`;
+});
+}
+
+/* CARRINHO */
+window.add = function(id){
+let p = products.find(x=>x.id===id);
+
+let f = cart.find(x=>x.id===id);
+if(f) f.qty++;
+else cart.push({...p,qty:1});
+}
+
+/* WHATSAPP */
+window.sendWhatsApp = function(){
+let msg="🛒 Pedido:%0A";
+let total=0;
+
+cart.forEach(p=>{
+let t=p.price*p.qty;
+total+=t;
+msg+=`- ${p.name} x${p.qty} = R$ ${t}%0A`;
 });
 
-/* ADD PRODUTO */
-window.addProduct = async function(p){
-  await firestore.addDoc(firestore.collection(db,"products"),p);
-};
+msg+=`%0A💰 TOTAL: R$ ${total}`;
 
-/* UPDATE PRODUTO */
-window.updateProduct = async function(id,data){
-  await firestore.updateDoc(firestore.doc(db,"products",id),data);
-};
+window.open("https://wa.me/"+WHATSAPP+"?text="+encodeURIComponent(msg));
+}
+
+/* ADMIN */
+window.openAdmin = ()=>admin.style.display="flex";
+window.closeAdmin = ()=>admin.style.display="none";
+
+window.login = function(){
+if(pass.value=="1234"){
+panel.style.display="block";
+}
+}
+
+/* ADD PRODUCT */
+window.addProduct = async function(){
+await addDoc(collection(db,"products"),{
+name:name.value,
+price:Number(price.value),
+img:img.value,
+category:cat.value
+});
+}
+
+/* ADMIN LIST */
+function renderAdmin(){
+let box=document.getElementById("adminList");
+box.innerHTML="";
+
+products.forEach(p=>{
+box.innerHTML += `
+<div style="padding:10px;border:1px solid #ddd;margin:5px">
+
+<b>${p.name}</b> - R$ ${p.price}
+
+<button onclick="del('${p.id}')">Excluir</button>
+
+</div>`;
+});
+}
 
 /* DELETE */
-window.deleteProduct = async function(id){
-  await firestore.deleteDoc(firestore.doc(db,"products",id));
-};
+window.del = async function(id){
+await deleteDoc(doc(db,"products",id));
+}
 
 </script>
+
+</body>
+</html>
