@@ -2,14 +2,29 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Best Imports</title>
+<title>Loja Profissional</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <style>
-body{font-family:Arial;margin:0;background:#f4f6f9}
-header{background:#111827;color:#fff;padding:15px;text-align:center}
+body{margin:0;font-family:Arial;background:#f4f6f9}
+
+header{
+background:#111827;
+color:#fff;
+padding:15px;
+text-align:center;
+position:relative;
+}
+
+#gear{
+position:absolute;
+right:15px;
+top:15px;
+cursor:pointer;
+font-size:20px;
+}
 
 .cat{
 display:flex;
@@ -37,6 +52,7 @@ padding:10px;
 background:#fff;
 border-radius:10px;
 overflow:hidden;
+box-shadow:0 2px 10px rgba(0,0,0,0.08);
 }
 
 .card img{
@@ -50,10 +66,11 @@ object-fit:cover;
 button{
 width:100%;
 padding:10px;
-background:#2563eb;
-color:#fff;
 border:none;
 border-radius:8px;
+background:#2563eb;
+color:#fff;
+font-weight:bold;
 }
 
 #cartBtn{
@@ -66,12 +83,35 @@ padding:15px;
 border-radius:50%;
 cursor:pointer;
 }
+
+/* ADMIN */
+#admin{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.6);
+display:none;
+align-items:center;
+justify-content:center;
+}
+
+.adminBox{
+width:95%;
+max-width:900px;
+background:#fff;
+padding:15px;
+border-radius:12px;
+max-height:90vh;
+overflow:auto;
+}
 </style>
 </head>
 
 <body>
 
-<header>🛍️ Best Imports</header>
+<header>
+🛍️ Loja Firebase
+<div id="gear" onclick="openAdmin()">⚙️</div>
+</header>
 
 <div class="cat">
 <button onclick="filter('all')">Todos</button>
@@ -83,9 +123,50 @@ cursor:pointer;
 
 <div id="cartBtn" onclick="sendWhatsApp()">🛒</div>
 
-<script>
+<!-- ADMIN -->
+<div id="admin">
+<div class="adminBox">
 
-/* FIREBASE */
+<h2>Admin</h2>
+
+<input id="adminPass" type="password" placeholder="Senha" style="width:100%;padding:10px">
+<button onclick="loginAdmin()">Entrar</button>
+
+<div id="adminArea" style="display:none">
+
+<hr>
+
+<input id="name" placeholder="Nome" style="width:100%;padding:8px">
+<input id="price" placeholder="Preço" style="width:100%;padding:8px">
+<input id="img" placeholder="Imagem URL" style="width:100%;padding:8px">
+
+<select id="cat" style="width:100%;padding:8px">
+<option>Perfume</option>
+<option>Monjauro</option>
+</select>
+
+<button onclick="addProduct()">Adicionar</button>
+
+<hr>
+
+<div id="adminList"></div>
+
+</div>
+
+<button onclick="closeAdmin()">Fechar</button>
+
+</div>
+</div>
+
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
   const firebaseConfig = {
     apiKey: "AIzaSyBmbDy3WAMmIGrbDJHrQiC3-QX_ASzLUbI",
     authDomain: "best-imports-b25a5.firebaseapp.com",
@@ -97,16 +178,18 @@ cursor:pointer;
     measurementId: "G-JNJ49FPNEH"
   };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+  
 /* DADOS */
 let products = [];
-let filterCat = "all";
 let cart = [];
+let filterCat = "all";
 const WHATSAPP = "5585982241638";
 
-/* CARREGAR DO BANCO */
+/* CARREGAR */
 function load(){
 db.collection("products").onSnapshot(snap=>{
 products = [];
@@ -116,39 +199,38 @@ products.push({id:doc.id,...doc.data()});
 });
 
 render();
+renderAdminList();
 });
 }
 
 /* FILTRO */
 function filter(c){
-filterCat = c;
+filterCat=c;
 render();
 }
 
 /* RENDER */
 function render(){
-let list = document.getElementById("list");
-list.innerHTML = "";
+let list=document.getElementById("list");
+list.innerHTML="";
 
 products.forEach(p=>{
+if(filterCat!=="all" && p.category!==filterCat) return;
 
-if(filterCat !== "all" && p.category !== filterCat) return;
-
-list.innerHTML += `
+list.innerHTML+=`
 <div class="card">
 <img src="${p.img}">
 <div class="card-body">
 <h3>${p.name}</h3>
 <p>R$ ${p.price}</p>
-<button onclick='add(${JSON.stringify(p)})'>Comprar</button>
+<button onclick='addCart(${JSON.stringify(p)})'>Comprar</button>
 </div>
-</div>
-`;
+</div>`;
 });
 }
 
-/* CARRINHO SIMPLES */
-function add(p){
+/* CART */
+function addCart(p){
 let found = cart.find(x=>x.id===p.id);
 
 if(found) found.qty++;
@@ -169,6 +251,51 @@ msg+=`- ${p.name} x${p.qty} = R$ ${t}%0A`;
 msg+=`%0A💰 TOTAL: R$ ${total}`;
 
 window.open("https://wa.me/"+WHATSAPP+"?text="+encodeURIComponent(msg));
+}
+
+/* ADMIN */
+function openAdmin(){
+document.getElementById("admin").style.display="flex";
+}
+
+function closeAdmin(){
+document.getElementById("admin").style.display="none";
+document.getElementById("adminArea").style.display="none";
+}
+
+function loginAdmin(){
+let pass=document.getElementById("adminPass").value;
+
+if(pass==="1234"){
+document.getElementById("adminArea").style.display="block";
+renderAdminList();
+}else{
+alert("Senha errada");
+}
+}
+
+/* ADD */
+function addProduct(){
+
+db.collection("products").add({
+name:name.value,
+price:Number(price.value),
+img:img.value,
+category:cat.value
+});
+}
+
+/* ADMIN LIST */
+function renderAdminList(){
+let box=document.getElementById("adminList");
+box.innerHTML="";
+
+products.forEach(p=>{
+box.innerHTML+=`
+<div style="padding:10px;background:#f4f6f9;margin:5px;border-radius:10px">
+<b>${p.name}</b> - R$ ${p.price}
+</div>`;
+});
 }
 
 load();
