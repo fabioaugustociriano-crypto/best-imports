@@ -57,10 +57,42 @@ input, select { padding:8px; margin:5px 0; width:100%; }
 
 </div>
 
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
 <script>
-let products = JSON.parse(localStorage.getItem("products")) || [];
+const firebaseConfig = {
+  apiKey: "AIzaSyBmbDy3WAMmIGrbDJHrQiC3-QX_ASzLUbI",
+  authDomain: "best-imports-b25a5.firebaseapp.com",
+  databaseURL: "https://best-imports-b25a5-default-rtdb.firebaseio.com",
+  projectId: "best-imports-b25a5",
+  storageBucket: "best-imports-b25a5.firebasestorage.app",
+  messagingSenderId: "1005080108441",
+  appId: "1:1005080108441:web:4d19fcf902add5b7a30708",
+  measurementId: "G-KMRB6NS837"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let products = [];
 let cart = [];
 let logged = false;
+
+// 🔄 Carregar produtos do Firebase
+db.ref("products").on("value", snapshot => {
+products = [];
+
+snapshot.forEach(item => {
+products.push({
+id: item.key,
+...item.val()
+});
+});
+
+renderProducts();
+});
 
 function renderProducts() {
 const list = document.getElementById("productList");
@@ -101,15 +133,12 @@ const category = document.getElementById("newCategory").value;
 
 const reader = new FileReader();
 reader.onload = function(e) {
-products.push({
+db.ref("products").push({
 name,
 price,
 category,
 image: e.target.result
 });
-
-localStorage.setItem("products", JSON.stringify(products));
-renderProducts();
 };
 
 if (file) reader.readAsDataURL(file);
@@ -138,7 +167,7 @@ const reader = new FileReader();
 
 reader.onload = function(ev) {
 p.image = ev.target.result;
-saveProducts();
+db.ref("products/" + p.id).update(p);
 };
 
 reader.readAsDataURL(file);
@@ -146,7 +175,7 @@ reader.readAsDataURL(file);
 
 input.click();
 } else {
-saveProducts();
+db.ref("products/" + p.id).update(p);
 }
 }
 
@@ -154,14 +183,8 @@ function deleteProduct(index) {
 if (!logged) return alert("Faça login");
 
 if (confirm("Tem certeza que deseja excluir este produto?")) {
-products.splice(index, 1);
-saveProducts();
+db.ref("products/" + products[index].id).remove();
 }
-}
-
-function saveProducts() {
-localStorage.setItem("products", JSON.stringify(products));
-renderProducts();
 }
 
 function login() {
@@ -172,6 +195,7 @@ if (user === "admin" && pass === "1234") {
 logged = true;
 document.getElementById("admin").style.display = "block";
 alert("Logado!");
+renderProducts();
 } else {
 alert("Senha incorreta");
 }
@@ -180,6 +204,7 @@ alert("Senha incorreta");
 function logout() {
 logged = false;
 document.getElementById("admin").style.display = "none";
+renderProducts();
 }
 
 function sendWhats() {
@@ -191,8 +216,6 @@ msg += `- ${p.name} R$${p.price}%0A`;
 
 window.open(`https://wa.me/5585982241638?text=${msg}`);
 }
-
-renderProducts();
 </script>
 
 </body>
