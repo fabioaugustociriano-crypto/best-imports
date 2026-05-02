@@ -2,30 +2,15 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Best Imports</title>
+<title>Loja Simples Firebase</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <style>
-*{margin:0;font-family:Arial;box-sizing:border-box}
-body{background:#f4f6f9}
+body{font-family:Arial;margin:0;background:#f4f6f9}
+header{background:#111827;color:#fff;padding:15px;text-align:center}
 
-/* HEADER */
-header{
-background:#111827;
-color:#fff;
-padding:18px;
-text-align:center;
-font-weight:bold;
-position:relative;
-}
-
-#gear{
-position:absolute;
-right:15px;
-top:15px;
-cursor:pointer;
-}
-
-/* CATEGORIAS */
 .cat{
 display:flex;
 gap:10px;
@@ -42,18 +27,16 @@ font-weight:bold;
 cursor:pointer;
 }
 
-/* PRODUTOS */
 .grid{
-padding:10px;
 display:grid;
 gap:10px;
+padding:10px;
 }
 
 .card{
 background:#fff;
-border-radius:12px;
+border-radius:10px;
 overflow:hidden;
-box-shadow:0 2px 10px rgba(0,0,0,0.08);
 }
 
 .card img{
@@ -64,24 +47,15 @@ object-fit:cover;
 
 .card-body{padding:10px}
 
-.price{
-color:#2563eb;
-font-weight:bold;
-}
-
 button{
 width:100%;
-padding:12px;
-border:none;
-border-radius:10px;
+padding:10px;
 background:#2563eb;
 color:#fff;
-font-weight:bold;
-cursor:pointer;
-margin-top:5px;
+border:none;
+border-radius:8px;
 }
 
-/* CART */
 #cartBtn{
 position:fixed;
 bottom:20px;
@@ -89,229 +63,91 @@ right:20px;
 background:#111827;
 color:#fff;
 padding:15px;
-border-radius:50px;
+border-radius:50%;
 cursor:pointer;
-}
-
-/* CART MODAL */
-#cartModal{
-position:fixed;
-bottom:-100%;
-left:0;
-width:100%;
-height:60%;
-background:#fff;
-border-top-left-radius:20px;
-border-top-right-radius:20px;
-transition:0.3s;
-padding:15px;
-overflow:auto;
-}
-
-#cartModal.active{bottom:0}
-
-.cartItem{
-display:flex;
-justify-content:space-between;
-padding:10px;
-border-bottom:1px solid #eee;
-}
-
-/* ADMIN */
-#admin{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.6);
-display:none;
-align-items:center;
-justify-content:center;
-}
-
-.adminBox{
-width:95%;
-max-width:900px;
-background:#fff;
-border-radius:12px;
-padding:15px;
-max-height:90vh;
-overflow:auto;
 }
 </style>
 </head>
 
 <body>
 
-<header>
-🛍️ Best Imports
-<div id="gear" onclick="openAdmin()">⚙️</div>
-</header>
+<header>🛍️ Minha Loja</header>
 
-<!-- CATEGORIAS -->
 <div class="cat">
 <button onclick="filter('all')">Todos</button>
-<button onclick="filter('Perfumes')">Perfumes</button>
 <button onclick="filter('Monjauro')">Monjauro</button>
+<button onclick="filter('Perfume')">Perfume</button>
 </div>
 
-<!-- PRODUTOS -->
 <div class="grid" id="list"></div>
 
-<!-- CARRINHO -->
-<div id="cartBtn" onclick="openCart()">🛒</div>
-
-<div id="cartModal">
-<h3>Carrinho</h3>
-<div id="cart"></div>
-<button onclick="sendWhatsApp()">Finalizar no WhatsApp</button>
-<button onclick="closeCart()">Fechar</button>
-</div>
-
-<!-- ADMIN -->
-<div id="admin">
-<div class="adminBox">
-
-<h2>⚙️ Painel Admin</h2>
-
-<input id="adminPass" type="password" placeholder="Senha admin" style="width:100%;padding:10px;margin:5px 0">
-<button onclick="adminLogin()" style="width:100%">Entrar</button>
-
-<hr>
-
-<div id="adminArea" style="display:none">
-
-<h3>➕ Novo Produto</h3>
-
-<input id="pName" placeholder="Nome" style="width:100%;padding:8px;margin:5px 0">
-<input id="pPrice" placeholder="Preço" style="width:100%;padding:8px;margin:5px 0">
-
-<input type="file" id="pFile" accept="image/*,application/pdf" style="width:100%;margin:5px 0">
-
-<select id="pCat" style="width:100%;padding:8px;margin:5px 0">
-<option>Perfumes</option>
-<option>Monjauro</option>
-<option>Mundial</option>
-</select>
-
-<button onclick="addAdminProduct()">Adicionar</button>
-
-<hr>
-
-<h3>📦 Produtos</h3>
-<div id="adminList"></div>
-
-</div>
-
-<button onclick="closeAdmin()" style="margin-top:10px;width:100%">Fechar</button>
-
-</div>
-</div>
+<div id="cartBtn" onclick="sendWhatsApp()">🛒</div>
 
 <script>
 
-const WHATSAPP="5585982241638";
-const ADMIN_PASS="1234";
+/* FIREBASE */
+const firebaseConfig = {
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_PROJETO.firebaseapp.com",
+  projectId: "SEU_PROJETO"
+};
 
-let cart=[];
-let filterCat="all";
-let uploaded="";
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-/* PRODUTOS */
-let products = JSON.parse(localStorage.getItem("products") || "[]");
+/* DADOS */
+let products = [];
+let filterCat = "all";
+let cart = [];
+const WHATSAPP = "5585982241638";
 
-if(products.length === 0){
-products=[
-{ id:1, name:"Tirzec 15 mg", price:0, img:"https://via.placeholder.com/400x300", category:"Monjauro" },
-{ id:2, name:"Lipoless MD", price:0, img:"https://via.placeholder.com/400x300", category:"Monjauro" },
-{ id:3, name:"Veltrane 90mg", price:0, img:"https://via.placeholder.com/400x300", category:"Perfumes" }
-];
+/* CARREGAR DO BANCO */
+function load(){
+db.collection("products").onSnapshot(snap=>{
+products = [];
 
-localStorage.setItem("products", JSON.stringify(products));
+snap.forEach(doc=>{
+products.push({id:doc.id,...doc.data()});
+});
+
+render();
+});
 }
 
-/* FILTER */
+/* FILTRO */
 function filter(c){
-filterCat=c;
+filterCat = c;
 render();
 }
 
 /* RENDER */
 function render(){
-let list=document.getElementById("list");
-list.innerHTML="";
+let list = document.getElementById("list");
+list.innerHTML = "";
 
-products.forEach((p,i)=>{
+products.forEach(p=>{
 
-if(filterCat !== "all" &&
-String(p.category).trim().toLowerCase() !== String(filterCat).trim().toLowerCase())
-return;
+if(filterCat !== "all" && p.category !== filterCat) return;
 
-list.innerHTML+=`
+list.innerHTML += `
 <div class="card">
 <img src="${p.img}">
 <div class="card-body">
 <h3>${p.name}</h3>
-<div class="price">R$ ${p.price}</div>
-<button onclick="addCart(${i})">Comprar</button>
+<p>R$ ${p.price}</p>
+<button onclick='add(${JSON.stringify(p)})'>Comprar</button>
 </div>
-</div>`;
+</div>
+`;
 });
 }
 
-/* CART */
-function addCart(i){
-let item=products[i];
-
-let found=cart.find(p=>p.id==item.id);
+/* CARRINHO SIMPLES */
+function add(p){
+let found = cart.find(x=>x.id===p.id);
 
 if(found) found.qty++;
-else cart.push({...item,qty:1});
-
-renderCart();
-openCart();
-}
-
-function renderCart(){
-let c=document.getElementById("cart");
-c.innerHTML="";
-
-let total=0;
-
-cart.forEach((p,i)=>{
-let subtotal=p.price*p.qty;
-total+=subtotal;
-
-c.innerHTML+=`
-<div class="cartItem">
-<div>
-<b>${p.name}</b><br>
-
-Qtd:
-<input type="number" value="${p.qty}" min="1"
-onchange="cart[${i}].qty=Number(this.value);renderCart()"
-style="width:60px">
-
-<br>
-R$ ${subtotal}
-</div>
-
-<div>
-<button onclick="cart[${i}].qty++;renderCart()">+</button>
-<button onclick="cart[${i}].qty>1?cart[${i}].qty--:cart.splice(${i},1);renderCart()">-</button>
-</div>
-</div>`;
-});
-
-c.innerHTML+=`<hr><h3>Total: R$ ${total}</h3>`;
-}
-
-/* CART */
-function openCart(){
-document.getElementById("cartModal").classList.add("active");
-renderCart();
-}
-
-function closeCart(){
-document.getElementById("cartModal").classList.remove("active");
+else cart.push({...p,qty:1});
 }
 
 /* WHATSAPP */
@@ -330,109 +166,7 @@ msg+=`%0A💰 TOTAL: R$ ${total}`;
 window.open("https://wa.me/"+WHATSAPP+"?text="+encodeURIComponent(msg));
 }
 
-/* ADMIN */
-function openAdmin(){
-document.getElementById("admin").style.display="flex";
-}
-
-function closeAdmin(){
-document.getElementById("admin").style.display="none";
-document.getElementById("adminArea").style.display="none";
-}
-
-function adminLogin(){
-let p=document.getElementById("adminPass").value;
-
-if(p===ADMIN_PASS){
-document.getElementById("adminArea").style.display="block";
-renderAdminList();
-}else{
-alert("Senha incorreta");
-}
-}
-
-/* UPLOAD */
-document.addEventListener("change",function(e){
-if(e.target.id==="pFile"){
-let file=e.target.files[0];
-
-let reader=new FileReader();
-reader.onload=function(){
-uploaded=reader.result;
-};
-reader.readAsDataURL(file);
-}
-});
-
-/* ADD */
-function addAdminProduct(){
-
-products.push({
-id:Date.now(),
-name:pName.value,
-price:Number(pPrice.value),
-img:uploaded || "https://via.placeholder.com/400x300",
-category:pCat.value
-});
-
-localStorage.setItem("products",JSON.stringify(products));
-
-uploaded="";
-render();
-renderAdminList();
-}
-
-/* ADMIN LIST */
-function renderAdminList(){
-let box=document.getElementById("adminList");
-box.innerHTML="";
-
-products.forEach((p,i)=>{
-
-box.innerHTML+=`
-<div style="display:flex;justify-content:space-between;padding:10px;background:#f4f6f9;margin:5px 0;border-radius:10px">
-
-<div>
-<b>${p.name}</b><br>
-R$ ${p.price}
-</div>
-
-<div style="display:flex;gap:5px">
-<button onclick="editAdmin(${i})">Editar</button>
-<button onclick="deleteAdmin(${i})" style="background:red;color:#fff">Excluir</button>
-</div>
-
-</div>`;
-});
-}
-
-function editAdmin(i){
-let p=products[i];
-
-let n=prompt("Nome:",p.name);
-let pr=prompt("Preço:",p.price);
-let cat=prompt("Categoria:",p.category);
-
-if(n) p.name=n;
-if(pr) p.price=Number(pr);
-if(cat) p.category=cat;
-
-localStorage.setItem("products",JSON.stringify(products));
-
-render();
-renderAdminList();
-}
-
-function deleteAdmin(i){
-products.splice(i,1);
-
-localStorage.setItem("products",JSON.stringify(products));
-
-render();
-renderAdminList();
-}
-
-render();
+load();
 
 </script>
 
