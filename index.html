@@ -2,11 +2,10 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Loja Pro</title>
+<title>Loja Atualizada</title>
 
 <style>
 *{margin:0;font-family:Arial;box-sizing:border-box}
-
 body{background:#f4f6f9}
 
 /* HEADER */
@@ -70,7 +69,6 @@ color:#2563eb;
 font-weight:bold;
 }
 
-/* BOTÃO */
 button{
 width:100%;
 padding:12px;
@@ -95,7 +93,7 @@ border-radius:50px;
 cursor:pointer;
 }
 
-/* MODAL CART */
+/* MODAL */
 #cartModal{
 position:fixed;
 bottom:-100%;
@@ -144,7 +142,7 @@ border-radius:10px;
 <body>
 
 <header>
-🛍️ Minha Loja
+🛍️ Loja Atualizada
 <div id="gear" onclick="openAdmin()">⚙️</div>
 </header>
 
@@ -180,13 +178,12 @@ border-radius:10px;
 
 <input id="name" placeholder="Nome">
 <input id="price" placeholder="Preço">
-
-<!-- UPLOAD -->
-<input type="file" id="fileInput" accept="image/*,application/pdf">
+<input id="img" placeholder="Imagem URL">
 
 <select id="cat">
 <option>Perfumes</option>
 <option>Monjauro</option>
+<option>Mundial</option>
 </select>
 
 <button onclick="login()">Entrar</button>
@@ -203,45 +200,37 @@ const ADMIN_PASS="1234";
 
 let cart=[];
 let filterCat="all";
-let uploadedFile="";
 
-/* PRODUTOS */
-let products=JSON.parse(localStorage.getItem("products"));
+/* PRODUTOS (NUNCA MAIS SOME) */
+let products = JSON.parse(localStorage.getItem("products") || "[]");
 
-if(!products){
+if(products.length === 0){
 products=[
 { id:1, name:"Tirzec 15 mg ampola unica", price:0, img:"https://via.placeholder.com/400x300", category:"Monjauro" },
-{ id:2, name:"Tirzec 15 mg 4 ampolas", price:0, img:"https://via.placeholder.com/400x300", category:"Monjauro" },
-{ id:3, name:"Lipoless MD ampola unica", price:0, img:"https://via.placeholder.com/400x300", category:"Monjauro" },
-{ id:4, name:"Lipoless 15 mg 4 ampolas", price:0, img:"https://via.placeholder.com/400x300", category:"Monjauro" },
-{ id:5, name:"Retatrutide verde", price:0, img:"https://via.placeholder.com/400x300", category:"Monjauro" },
-
-{ id:6, name:"Veltrane 90 mg", price:0, img:"https://via.placeholder.com/400x300", category:"Perfumes" },
-{ id:7, name:"Veltrane 120mg", price:0, img:"https://via.placeholder.com/400x300", category:"Perfumes" }
+{ id:2, name:"Lipoless MD ampola unica", price:0, img:"https://via.placeholder.com/400x300", category:"Monjauro" },
+{ id:3, name:"Veltrane 90 mg", price:0, img:"https://via.placeholder.com/400x300", category:"Perfumes" },
+{ id:4, name:"Sabah", price:0, img:"https://via.placeholder.com/400x300", category:"Perfumes" }
 ];
 
-localStorage.setItem("products",JSON.stringify(products));
+localStorage.setItem("products", JSON.stringify(products));
 }
 
-/* UPLOAD */
-document.getElementById("fileInput").addEventListener("change",function(e){
-let file=e.target.files[0];
-let reader=new FileReader();
+/* FILTER CORRIGIDO */
+function filter(c){
+filterCat = c;
+render();
+}
 
-reader.onload=function(){
-uploadedFile=reader.result;
-};
-
-reader.readAsDataURL(file);
-});
-
-/* RENDER */
+/* RENDER PRODUTOS */
 function render(){
 let list=document.getElementById("list");
 list.innerHTML="";
 
 products.forEach((p,i)=>{
-if(filterCat!="all" && p.category!=filterCat) return;
+
+if(filterCat !== "all" &&
+String(p.category).trim().toLowerCase() !== String(filterCat).trim().toLowerCase())
+return;
 
 list.innerHTML+=`
 <div class="card">
@@ -253,12 +242,6 @@ list.innerHTML+=`
 </div>
 </div>`;
 });
-}
-
-/* FILTER */
-function filter(c){
-filterCat=c;
-render();
 }
 
 /* CART */
@@ -274,7 +257,6 @@ renderCart();
 openCart();
 }
 
-/* CARRINHO COM QUANTIDADE EDITÁVEL */
 function renderCart(){
 let c=document.getElementById("cart");
 c.innerHTML="";
@@ -350,20 +332,18 @@ function closeAdmin(){
 document.getElementById("admin").style.display="none";
 }
 
-/* ADD PRODUCT */
+/* ADD */
 function addProduct(){
 
 products.push({
 id:Date.now(),
 name:name.value,
 price:Number(price.value),
-img: uploadedFile || "https://via.placeholder.com/400x300",
+img:img.value || "https://via.placeholder.com/400x300",
 category:cat.value
 });
 
-localStorage.setItem("products",JSON.stringify(products));
-
-uploadedFile="";
+localStorage.setItem("products", JSON.stringify(products));
 
 render();
 closeAdmin();
