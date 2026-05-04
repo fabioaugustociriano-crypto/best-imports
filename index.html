@@ -104,26 +104,29 @@ list.innerHTML = "";
 
 products
 .filter(p => filter === "all" || p.category === filter)
-.forEach((p, index) => {
+.forEach((p) => {
 list.innerHTML += `
 <div class="card">
 <img src="${p.image}">
 <h3>${p.name}</h3>
 <p>R$ ${p.price}</p>
-<button onclick="addToCart(${index})">Comprar</button>
+<button onclick="addToCart('${p.id}')">Comprar</button>
 ${logged ? `
-<button onclick="editProduct(${index})">Editar</button>
-<button onclick="deleteProduct(${index})">Excluir</button>
+<button onclick="editProductById('${p.id}')">Editar</button>
+<button onclick="deleteProductById('${p.id}')">Excluir</button>
 ` : ""}
 </div>
 `;
 });
 }
 
-function addToCart(index) {
-const item = cart.find(p => p.id === products[index].id);
+function addToCart(id) {
+const product = products.find(p => p.id === id);
+const item = cart.find(p => p.id === id);
+
 if (item) item.qty += 1;
-else cart.push({...products[index], qty:1});
+else cart.push({...product, qty:1});
+
 updateCart();
 }
 
@@ -191,10 +194,10 @@ db.ref("products").push({ name, price, category, image: e.target.result });
 if (file) reader.readAsDataURL(file);
 }
 
-function editProduct(index) {
+function editProductById(id) {
 if (!logged) return alert("Faça login");
 
-const p = products[index];
+const p = products.find(p => p.id === id);
 
 const newName = prompt("Novo nome:", p.name);
 const newPrice = prompt("Novo preço:", p.price);
@@ -207,11 +210,11 @@ if (newCategory) p.category = newCategory;
 db.ref("products/" + p.id).update(p);
 }
 
-function deleteProduct(index) {
+function deleteProductById(id) {
 if (!logged) return alert("Faça login");
 
 if (confirm("Excluir produto?")) {
-db.ref("products/" + products[index].id).remove();
+db.ref("products/" + id).remove();
 }
 }
 
